@@ -1,5 +1,6 @@
+import numpy as np
 import matplotlib.pyplot as plt
-import distribution.random_state 
+from distribution_functions.property_calculation_function import average_bond_dimension_for_epsilon
 
 # Parameters
 num_states = 10  # Number of random quantum states

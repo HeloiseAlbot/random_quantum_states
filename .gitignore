@@ -4,4 +4,5 @@
 # Ignore Python virtual environments
 .venv/
 
-.slurm/
+slurm/
+
