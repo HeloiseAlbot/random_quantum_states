@@ -187,7 +187,7 @@ def check_left_normalization_before_middle(M, d, l):
     return np.linalg.norm(sum_product - identity, 'fro')  # Should equal 0 for valid M
 
 
-def produce_a_random_state(L, d=2):
+def produce_a_random_mps(L, d=2):
     """
     Input:
     L (int): number of site (assumed even for simplicity for the moment).
@@ -322,7 +322,7 @@ def random_eigenvalues_from_n_sphere(n, r=1):
         return np.sort(np.square(coordinates))[::-1]
 
 def random_state_vector_from_mps(L, d=2):
-    list_M, _, _, _ = produce_a_random_state(L, d)
+    list_M, _, _, _ = produce_a_random_mps(L, d)
     state = vector_state_from_mps(list_M, L, d)
     return state
 
@@ -374,7 +374,7 @@ def random_point_on_the_n_sphere_around_max_entangled_state(n, diameter_disk, an
         new_coordinates[-1] = r * product_sin * np.sin(new_angles[-1])
     return new_coordinates
 
-def produce_a_point_in_a_disk(L, d=2, diameter_disk = 0.01):
+def produce_a_random_mps_eigenvalues_in_a_disk(L, d=2, diameter_disk = 0.01):
     """
     Input:
     L (int): number of site (assumed even for simplicity for the moment).
@@ -441,7 +441,12 @@ def produce_a_point_in_a_disk(L, d=2, diameter_disk = 0.01):
         M_optimized = result.x.reshape(d_l, d_l)
         list_M.insert(0, reshape_array_before_middle(M_optimized, d, l))
         list_objective_error.insert(0, check_objective_before_middle(M_optimized, rho_l, rho_l_minus_one, d, l))
-        list_left_normalization_error.insert(0, check_left_normalization(M_optimized, d, l))
+        list_left_normalization_error.insert(0, check_left_normalization_before_middle(M_optimized, d, l))
         rho_l = rho_l_minus_one
 
     return list_M, list_objective_error, list_left_normalization_error, rho_middle
+
+def random_state_vector_from_mps_eigenvalues_in_a_disk(L, d=2, diameter_disk=0.01):
+    list_M, _, _, _ = produce_a_random_mps_eigenvalues_in_a_disk(L, d, diameter_disk)
+    state = vector_state_from_mps(list_M, L, d)
+    return state

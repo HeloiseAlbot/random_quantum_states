@@ -1,8 +1,13 @@
 import numpy as np
+import sys
 
-from distribution_functions.random_mps import random_state_vector_from_mps
+from distribution_functions.random_mps import random_state_vector_from_mps, random_state_vector_from_mps_eigenvalues_in_a_disk
 from distribution_functions.different_distribution_random_states_and_matrices import Haar_measure_random_state
 from distribution_functions.kl_divergence import compute_kl_divergence
+
+# sys.argv = [name_of_the_program, diameter_disk]
+print("sys.argv:{}".format(sys.argv))
+diameter_disk = int(sys.argv[1])
 
 L = 4
 d = 2
@@ -11,9 +16,13 @@ d = 2
 args_dict_1 = {"N": d**L}
 func1 = Haar_measure_random_state
 
-# The function 2 is our distribution. 
+# The function 2 is our distribution, the random mps state. 
 args_dict_2 = {"L": L, "d": d}
 func2 = random_state_vector_from_mps
+
+# The function 2 is our distribution, the random mps state center around the maximally entangled state. 
+args_dict_2 = {"L": L, "d": d, "diameter_disk": diameter_disk}
+func2 = random_state_vector_from_mps_eigenvalues_in_a_disk
 
 # args_dict_2 = {"N": d**L}
 # func2 = Haar_measure_random_state

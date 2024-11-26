@@ -19,9 +19,13 @@
 #SBATCH --error=/scratch/h/H.Albot/distribution/slurm/output_%j.serr
 
 start_time="$(date -u +%s)"
-
 echo $PATH
-python3 test/kl_divergence.py
+
+# Run Python scripts in parallel
+for diameter_disk in 0 1 2 3; do
+    python3 test/kl_divergence.py $diameter_disk &
+done
+
 echo "Job finished"
 sleep 15
 
