@@ -1,0 +1,7 @@
+# Ignore all .log files
+*.log
+
+# Ignore Python virtual environments
+.venv/
+
+.slurm/
