@@ -314,28 +314,71 @@ def random_point_on_the_n_sphere(n, r=1):
     
     return coordinates
 
-def random_eigenvalues_from_n_sphere(n, r=1):
+def random_eigenvalues_from_n_sphere(n: int, r=1)-> np.array:
     if n ==1:
         return np.array([[1]])
     else:
         coordinates = random_point_on_the_n_sphere(n, r)
         return np.sort(np.square(coordinates))[::-1]
 
-def random_state_vector_from_mps(L, d=2):
+def random_state_vector_from_mps(L, d=2)-> np.array:
     list_M, _, _, _ = produce_a_random_mps(L, d)
     state = vector_state_from_mps(list_M, L, d)
     return state
 
-def maximally_entangled_eigenvalues(n:int):
+def product_state_eigenvalues(n: int) ->np.array:
+    eigenvalues = np.zeros(n)
+    eigenvalues[0] = 1
+    return eigenvalues
+
+def generate_angle_product_state_eigenvalues(n: int)-> np.array:
+    """
+    Generate the spherical coordinates corresponding to the Cartesian coordinates given by 
+    (1, 0,...,0).
+    
+    Return:
+    phi_i (np.array of shape (n-1)): array of angles (in radian).
+    """
+    angles = np.ones(n-1)*np.pi/2 
+    angles[0] = 0
+    return angles
+
+def maximally_entangled_eigenvalues(n: int)-> np.array:
     return np.ones(n)*(1/n)
 
-def generate_angle_maximally_entangled_eigenvalues(n:int):
+def generate_angle_maximally_entangled_eigenvalues(n:int)-> np.array:
     """
     Generate the spherical coordinates corresponding to the Cartesian coordinates given by 
     (1/\sqrt{n},...,1/\sqrt{n}).
+    
+    Return:
+    phi_i (np.array of shape (n-1)): array of angles (in radian).
     """
     phi_i = np.arccos([1/math.sqrt(n+1-i) for i in range(1,n)])
     return phi_i
+
+def generate_angles_between_max_entangled_and_product_state_eigenvalues(n:int, t:float)-> np.array:
+    """
+    Generate the spherical coordinates on the n-sphere with r=1 corresponding to 
+    the vector D(t) = v_0 + t (v_1 - v_0) with v_0, v_1 points on the n-sphere with 
+    the following spherical coordinates: 
+    v_0 = ( 0, pi/2,..., pi/2)
+    v_1 = np.arccos([1/math.sqrt(n+1-i) for i in range(1, n)])
+
+    Input:
+    t (float)
+    n (int): the dimension of the n-sphere.
+
+    Output:
+    angles (np.array): array of angles (in radian) of dimension (n-1).
+    """
+    if n==1:
+        return np.array([1])
+    else: 
+        v_0 = generate_angle_maximally_entangled_eigenvalues(n)
+        v_1 = generate_angle_product_state_eigenvalues(n)
+        D = (1-t) * v_0 + t * v_1 
+        return D
 
 def random_point_on_the_n_sphere_around_max_entangled_state(n, diameter_disk, angles_center=None, r=1):
     """
