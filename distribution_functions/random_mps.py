@@ -346,7 +346,7 @@ def generate_angle_product_state_eigenvalues(n: int)-> np.array:
 def maximally_entangled_eigenvalues(n: int)-> np.array:
     return np.ones(n)*(1/n)
 
-def generate_angle_maximally_entangled_eigenvalues(n:int)-> np.array:
+def generate_angle_maximally_entangled_eigenvalues(n: int)-> np.array:
     """
     Generate the spherical coordinates corresponding to the Cartesian coordinates given by 
     (1/\sqrt{n},...,1/\sqrt{n}).
@@ -380,7 +380,7 @@ def generate_angles_between_max_entangled_and_product_state_eigenvalues(n:int, t
         D = (1-t) * v_0 + t * v_1 
         return D
 
-def random_point_on_the_n_sphere_in_a_disk(n, diameter_disk, angles_center=None, t=1, r=1):
+def random_point_on_the_n_sphere_in_a_disk(n, diameter_disk, angles_center, r=1):
     """
     Input:
     epsilon (float): the diameter of the disk (in radian). We place the simulation in the positive orthant. 
@@ -398,16 +398,11 @@ def random_point_on_the_n_sphere_in_a_disk(n, diameter_disk, angles_center=None,
                     coordinates. 
     """
     rayon_disk = diameter_disk/2
+    rayon_disk = diameter_disk/2
     # Generate the coordinates of the maximal
     if angles_center is None:
+        print("Angles center is None")
         angles_center = generate_angle_maximally_entangled_eigenvalues(n)
-        if rayon_disk > math.asin(1/math.sqrt(n)):
-            raise ValueError("Input parameter epsilon must be smaller than arcsin(1/sqrt(n)).")
-    else:
-        minimum_value_rayon = min(t*math.acos(1/math.sqrt(n)), np.pi/2 - t*math.acos(1/math.sqrt(n)), t*math.asin(1/math.sqrt(n-1)),np.pi/4*(2-t))
-        if rayon_disk > minimum_value_rayon:
-            raise ValueError(f"Input parameter epsilon must be smaller than {minimum_value_rayon}.")
-        angles_center = generate_angles_between_max_entangled_and_product_state_eigenvalues(n, t)
 
     # Step 1: Generate the random angles
     delta_angles = np.random.uniform(- rayon_disk, rayon_disk, n - 1)   # Δφ1, Δφ2, ..., Δφ_{n-1} in [-ε/2, +ε/2]
@@ -497,6 +492,90 @@ def produce_a_random_mps_eigenvalues_in_a_disk(L, d=2, diameter_disk = 0.01):
         rho_l = rho_l_minus_one
 
     return list_M, list_objective_error, list_left_normalization_error, rho_middle
+
+
+def produce_a_random_mps_eigenvalues_in_a_disk_center_moving(L, d=2, t=1, diameter_disk = 0.01):
+    """
+    Input:
+    L (int): number of site (assumed even for simplicity for the moment).
+    d (int): dimension of the hilbert space of a single site (for qubit d=2).
+    t (float): in [0,1]
+    
+    Output:
+    list_M (list): list of the tensors M_optimized ordered increasingly. 
+    list_objective_error
+    list_left_normalization_error
+    rho_middle
+    
+    The function constructs in the decreasing order, the matrix M to produce a random product state. 
+    """
+    rho_l = np.array([[1]]) # Initial density matrix rho_L.
+    list_M = [] # I store the matrices M in a list. 
+    list_objective_error = []
+    list_left_normalization_error = []
+    rayon_disk = diameter_disk/2    
+
+    for l in range(L, int(L/2), -1): # l> L/2
+        d_L_minus_l_plus_1 = int(d**(L-l+1))
+        if d_L_minus_l_plus_1>1:
+            minimum_value_rayon_l = min(t*math.acos(1/math.sqrt(d_L_minus_l_plus_1)), np.pi/2 - t*math.acos(1/math.sqrt(d_L_minus_l_plus_1)), t*math.asin(1/math.sqrt(d_L_minus_l_plus_1-1)),np.pi/4*(2-t))
+            if rayon_disk > minimum_value_rayon_l:
+                raise ValueError(f"Input parameter epsilon must be smaller than {minimum_value_rayon_l}.")
+        angles_center_l = generate_angles_between_max_entangled_and_product_state_eigenvalues(d_L_minus_l_plus_1, t)
+        s_i = np.square(random_point_on_the_n_sphere_in_a_disk(d_L_minus_l_plus_1, diameter_disk, angles_center_l))
+        # Random unitary matrix (rho is a density matrix so Hermitian so diagonalizable by a unitary matrix).
+        Q = random_unitary_matrix(d_L_minus_l_plus_1) 
+        D = np.diag(s_i) # Uniform distribution, to be modified later. 
+        rho_l_minus_one = Q @ D @ np.conj(Q).T
+
+        # Initialize M randomly 
+        M_initial = np.random.randn(d_L_minus_l_plus_1, d_L_minus_l_plus_1) + 1j * np.random.randn(d_L_minus_l_plus_1, d_L_minus_l_plus_1)
+        M_initial = M_initial.flatten()
+        # Constraints dictionary for scipy.optimize
+        constraints = {'type': 'eq', 'fun': constraint_M_after_middle, 'args': (d, l, L)}
+        # Optimize M to minimize the loss while satisfying the constraint
+        result = minimize(loss_function_M_after_middle, M_initial, args=(rho_l, rho_l_minus_one, d, l, L), 
+                          constraints=constraints, method='SLSQP', options={'disp': False})
+        # Put options={'disp': True} to have the information about the optimization. 
+        # Reshape the result back to the original shape
+        M_optimized = result.x.reshape(d_L_minus_l_plus_1, d_L_minus_l_plus_1)
+        list_M.insert(0, reshape_array_after_middle(M_optimized, d, l))
+        list_objective_error.insert(0,check_objective_after_middle(M_optimized, rho_l, rho_l_minus_one, d, l, L))
+        list_left_normalization_error.insert(0, check_left_normalization_after_middle(M_optimized, d, l, L))
+        rho_l = rho_l_minus_one
+    rho_middle = rho_l
+
+    for l in range(int(L/2), 0, -1): #l <= L/2
+        d_l = int(d**(l))
+        d_l_minus_one = int(d**(l-1))
+        if d_l_minus_one > 1:
+            minimum_value_rayon_l = min(t*math.acos(1/math.sqrt(d_l_minus_one)), np.pi/2 - t*math.acos(1/math.sqrt(d_l_minus_one)), t*math.asin(1/math.sqrt(d_l_minus_one-1)),np.pi/4*(2-t))
+            if rayon_disk > minimum_value_rayon_l:
+                raise ValueError(f"Input parameter epsilon must be smaller than {minimum_value_rayon_l}.")
+        angles_center_l = generate_angles_between_max_entangled_and_product_state_eigenvalues(d_l_minus_one, t)
+        s_i = np.square(random_point_on_the_n_sphere_in_a_disk(d_l_minus_one, diameter_disk, angles_center_l))
+        # Random unitary matrix (rho is a density matrix so Hermitian so diagonalizable by a unitary matrix).
+        Q = random_unitary_matrix(d_l_minus_one) 
+        D = np.diag(s_i) # Uniform distribution, to be modified later. 
+        rho_l_minus_one = Q @ D @ np.conj(Q).T
+        
+        # Find M minimising our objective function with the left normalization constraint. 
+        M_initial = np.random.randn(d_l, d_l) + 1j * np.random.randn(d_l, d_l)
+        M_initial = M_initial.flatten()
+        # Constraints dictionary for scipy.optimize
+        constraints = {'type': 'eq', 'fun': constraint_M_before_middle, 'args': (d, l)}
+        # Optimize M to minimize the loss while satisfying the constraint
+        result = minimize(loss_function_M_before_middle, M_initial, args=(rho_l, rho_l_minus_one, d, l), 
+                          constraints=constraints, method='SLSQP', options={'disp': False})
+        # Reshape the result back to the original shape
+        M_optimized = result.x.reshape(d_l, d_l)
+        list_M.insert(0, reshape_array_before_middle(M_optimized, d, l))
+        list_objective_error.insert(0, check_objective_before_middle(M_optimized, rho_l, rho_l_minus_one, d, l))
+        list_left_normalization_error.insert(0, check_left_normalization_before_middle(M_optimized, d, l))
+        rho_l = rho_l_minus_one
+
+    return list_M, list_objective_error, list_left_normalization_error, rho_middle
+
 
 def random_state_vector_from_mps_eigenvalues_in_a_disk(L, d=2, diameter_disk=0.01):
     list_M, _, _, _ = produce_a_random_mps_eigenvalues_in_a_disk(L, d, diameter_disk)
