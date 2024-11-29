@@ -15,9 +15,7 @@ def compute_kl_divergence(func1, func2, args_dict_1, args_dict_2, n_samples=1000
         
     Returns:
         float: The KL divergence D_KL(P || Q).
-    """
-    
-    
+    """    
     # Generates n_samples random state vectors of dimension n.
     samples1 = np.array([func1(**args_dict_1) for _ in range(n_samples)])
     samples2 = np.array([func2(**args_dict_2) for _ in range(n_samples)])

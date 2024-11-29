@@ -380,7 +380,7 @@ def generate_angles_between_max_entangled_and_product_state_eigenvalues(n:int, t
         D = (1-t) * v_0 + t * v_1 
         return D
 
-def random_point_on_the_n_sphere_around_max_entangled_state(n, diameter_disk, angles_center=None, r=1):
+def random_point_on_the_n_sphere_in_a_disk(n, diameter_disk, angles_center=None, t=1, r=1):
     """
     Input:
     epsilon (float): the diameter of the disk (in radian). We place the simulation in the positive orthant. 
@@ -388,6 +388,9 @@ def random_point_on_the_n_sphere_around_max_entangled_state(n, diameter_disk, an
                     epsilon_over_2 > math.asin(1/math.sqrt(n)), hence the ValueError line. 
     angles_center (np.array): coordinates of the point with is the center of the disk in which are taken 
                     the random point. By default, it will be the point giving the maximally mixed states. 
+    t (float): Float in [0,1]. In the case where we need to compute the center of the disk via the function 
+                generate_angles_between_max_entangled_and_product_state_eigenvalues(n, t). It is the t quantifying 
+                the distance between the center and the product state. 
     
     Output: 
     new_coordinates (np.array): A random point uniformly distributed around the point whose coordinates are angles_center 
@@ -395,11 +398,17 @@ def random_point_on_the_n_sphere_around_max_entangled_state(n, diameter_disk, an
                     coordinates. 
     """
     rayon_disk = diameter_disk/2
-    if rayon_disk > math.asin(1/math.sqrt(n)):
-        raise ValueError("Input parameter epsilon must be smaller than arcsin(1/sqrt(n)).")
     # Generate the coordinates of the maximal
     if angles_center is None:
         angles_center = generate_angle_maximally_entangled_eigenvalues(n)
+        if rayon_disk > math.asin(1/math.sqrt(n)):
+            raise ValueError("Input parameter epsilon must be smaller than arcsin(1/sqrt(n)).")
+    else:
+        minimum_value_rayon = min(t*math.acos(1/math.sqrt(n)), np.pi/2 - t*math.acos(1/math.sqrt(n)), t*math.asin(1/math.sqrt(n-1)),np.pi/4*(2-t))
+        if rayon_disk > minimum_value_rayon:
+            raise ValueError(f"Input parameter epsilon must be smaller than {minimum_value_rayon}.")
+        angles_center = generate_angles_between_max_entangled_and_product_state_eigenvalues(n, t)
+
     # Step 1: Generate the random angles
     delta_angles = np.random.uniform(- rayon_disk, rayon_disk, n - 1)   # Δφ1, Δφ2, ..., Δφ_{n-1} in [-ε/2, +ε/2]
     # Step 2: Compute x1, x2, ..., xn
@@ -439,7 +448,7 @@ def produce_a_random_mps_eigenvalues_in_a_disk(L, d=2, diameter_disk = 0.01):
     for l in range(L, int(L/2), -1): # l> L/2
         d_L_minus_l_plus_1 = int(d**(L-l+1))
         angles_center_l = generate_angle_maximally_entangled_eigenvalues(d_L_minus_l_plus_1)
-        s_i = np.square(random_point_on_the_n_sphere_around_max_entangled_state(d_L_minus_l_plus_1, diameter_disk, angles_center_l))
+        s_i = np.square(random_point_on_the_n_sphere_in_a_disk(d_L_minus_l_plus_1, diameter_disk, angles_center_l))
         # Random unitary matrix (rho is a density matrix so Hermitian so diagonalizable by a unitary matrix).
         Q = random_unitary_matrix(d_L_minus_l_plus_1) 
         D = np.diag(s_i) # Uniform distribution, to be modified later. 
@@ -466,7 +475,7 @@ def produce_a_random_mps_eigenvalues_in_a_disk(L, d=2, diameter_disk = 0.01):
         d_l = int(d**(l))
         d_l_minus_one = int(d**(l-1))
         angles_center_l = generate_angle_maximally_entangled_eigenvalues(d_l_minus_one)
-        s_i = np.square(random_point_on_the_n_sphere_around_max_entangled_state(d_l_minus_one, diameter_disk, angles_center_l))
+        s_i = np.square(random_point_on_the_n_sphere_in_a_disk(d_l_minus_one, diameter_disk, angles_center_l))
         # Random unitary matrix (rho is a density matrix so Hermitian so diagonalizable by a unitary matrix).
         Q = random_unitary_matrix(d_l_minus_one) 
         D = np.diag(s_i) # Uniform distribution, to be modified later. 
