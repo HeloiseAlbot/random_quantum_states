@@ -380,24 +380,25 @@ def generate_angles_between_max_entangled_and_product_state_eigenvalues(n:int, t
         D = (1-t) * v_0 + t * v_1 
         return D
 
-def random_point_on_the_n_sphere_in_a_disk(n, diameter_disk, angles_center, r=1):
+def random_point_on_the_n_sphere_in_a_disk(n: int, diameter_disk: float, angles_center: np.array, r: float=1):
     """
     Input:
-    epsilon (float): the diameter of the disk (in radian). We place the simulation in the positive orthant. 
+    n (int): dimension of the space of the n-sphere. 
+    diameter_disk (float): the diameter of the disk (in radian). We place the simulation in the positive orthant. 
                     Then, in order to keep a uniform distribution on the disk of the n-sphere we should have: 
                     epsilon_over_2 > math.asin(1/math.sqrt(n)), hence the ValueError line. 
     angles_center (np.array): coordinates of the point with is the center of the disk in which are taken 
                     the random point. By default, it will be the point giving the maximally mixed states. 
-    t (float): Float in [0,1]. In the case where we need to compute the center of the disk via the function 
-                generate_angles_between_max_entangled_and_product_state_eigenvalues(n, t). It is the t quantifying 
-                the distance between the center and the product state. 
-    
+    # t (float): Float in [0,1]. In the case where we need to compute the center of the disk via the function 
+    #             generate_angles_between_max_entangled_and_product_state_eigenvalues(n, t). It is the t quantifying 
+    #             the distance between the center and the product state. 
+    r (float): rayon of the n-sphere. By default, 1.
+
     Output: 
     new_coordinates (np.array): A random point uniformly distributed around the point whose coordinates are angles_center 
                     in a disk of diameter diameter_disk on the n-sphere. The point is given via its Cartesian 
                     coordinates. 
     """
-    rayon_disk = diameter_disk/2
     rayon_disk = diameter_disk/2
     # Generate the coordinates of the maximal
     if angles_center is None:
@@ -405,7 +406,7 @@ def random_point_on_the_n_sphere_in_a_disk(n, diameter_disk, angles_center, r=1)
         angles_center = generate_angle_maximally_entangled_eigenvalues(n)
 
     # Step 1: Generate the random angles
-    delta_angles = np.random.uniform(- rayon_disk, rayon_disk, n - 1)   # Δφ1, Δφ2, ..., Δφ_{n-1} in [-ε/2, +ε/2]
+    delta_angles = np.random.uniform( -rayon_disk, rayon_disk, n - 1) # Δφ1, Δφ2, ..., Δφ_{n-1} in [-ε/2, +ε/2]
     # Step 2: Compute x1, x2, ..., xn
     new_angles = angles_center + delta_angles
     new_coordinates = np.zeros(n)
@@ -579,5 +580,10 @@ def produce_a_random_mps_eigenvalues_in_a_disk_center_moving(L, d=2, t=1, diamet
 
 def random_state_vector_from_mps_eigenvalues_in_a_disk(L, d=2, diameter_disk=0.01):
     list_M, _, _, _ = produce_a_random_mps_eigenvalues_in_a_disk(L, d, diameter_disk)
+    state = vector_state_from_mps(list_M, L, d)
+    return state
+
+def random_state_vector_from_mps_eigenvalues_in_a_disk_center_moving(L: int, d: int=2, t: float=1, diameter_disk: float=0.01):
+    list_M, _, _, _ = produce_a_random_mps_eigenvalues_in_a_disk_center_moving(L, d, t, diameter_disk)
     state = vector_state_from_mps(list_M, L, d)
     return state
