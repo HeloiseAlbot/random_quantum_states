@@ -523,8 +523,8 @@ def produce_a_random_mps_eigenvalues_in_a_disk_center_moving(L, d=2, t=1, diamet
         d_L_minus_l_plus_1 = int(d**(L-l+1))
         if d_L_minus_l_plus_1>1:
             minimum_value_rayon_l = min(t*math.acos(1/math.sqrt(d_L_minus_l_plus_1)), np.pi/2 - t*math.acos(1/math.sqrt(d_L_minus_l_plus_1)), t*math.asin(1/math.sqrt(d_L_minus_l_plus_1-1)),np.pi/4*(2-t))
-            # if rayon_disk > minimum_value_rayon_l:
-            #     raise ValueError(f"Input parameter epsilon must be smaller than {minimum_value_rayon_l}.")
+            if rayon_disk > minimum_value_rayon_l:
+                raise ValueError(f"Input parameter diameter_disk must be smaller than {2*minimum_value_rayon_l}.")
         angles_center_l = generate_angles_between_max_entangled_and_product_state_eigenvalues(d_L_minus_l_plus_1, t)
         s_i = np.square(random_point_on_the_n_sphere_in_a_disk(d_L_minus_l_plus_1, diameter_disk, angles_center_l))
         # Random unitary matrix (rho is a density matrix so Hermitian so diagonalizable by a unitary matrix).
@@ -554,8 +554,8 @@ def produce_a_random_mps_eigenvalues_in_a_disk_center_moving(L, d=2, t=1, diamet
         d_l_minus_one = int(d**(l-1))
         if d_l_minus_one > 1:
             minimum_value_rayon_l = min(t*math.acos(1/math.sqrt(d_l_minus_one)), np.pi/2 - t*math.acos(1/math.sqrt(d_l_minus_one)), t*math.asin(1/math.sqrt(d_l_minus_one-1)),np.pi/4*(2-t))
-            # if rayon_disk > minimum_value_rayon_l:
-            #     raise ValueError(f"Input parameter epsilon must be smaller than {minimum_value_rayon_l}.")
+            if rayon_disk > minimum_value_rayon_l:
+                raise ValueError(f"Input parameter diameter_disk must be smaller than {2*minimum_value_rayon_l}.")
         angles_center_l = generate_angles_between_max_entangled_and_product_state_eigenvalues(d_l_minus_one, t)
         s_i = np.square(random_point_on_the_n_sphere_in_a_disk(d_l_minus_one, diameter_disk, angles_center_l))
         # Random unitary matrix (rho is a density matrix so Hermitian so diagonalizable by a unitary matrix).
