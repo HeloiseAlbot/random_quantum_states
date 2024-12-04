@@ -20,14 +20,14 @@
 
 start_time="$(date -u +%s)"
 echo $PATH
-diameter_disk=0.1
-t=0.1
+diameter_disk=0.01
+t=0
 # Run Python scripts in parallel
 # for diameter_disk in 0.01 0.05 0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5; do
 #     python3 test/kl_divergence_disk.py $diameter_disk &
 # done
-python3 test/kl_divergence_disk.py $diameter_disk $t
-# python3 test/kl_divergence.py
+python3 test/kl_divergence_disk_moving.py $diameter_disk $t
+# python3 test/kl_divergence_disk.py 
 
 echo "Job finished"
 sleep 15

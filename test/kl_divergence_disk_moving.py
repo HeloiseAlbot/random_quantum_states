@@ -40,7 +40,7 @@ func2 = random_state_vector_from_mps_eigenvalues_in_a_disk_center_moving
 np.random.seed(42)
 
 # Compute KL divergence
-kl_result = compute_kl_divergence(func1, func2, args_dict_1, args_dict_2, n_samples=1, bins=100, range_proba=(-5, 5))
+kl_result = compute_kl_divergence(func1, func2, args_dict_1, args_dict_2, n_samples=10000, bins=100, range_proba=(-5, 5))
 print("KL Divergence:", kl_result)
 
 # Specify the file to save the value
