@@ -211,7 +211,8 @@ def produce_a_random_mps(L, d=2):
         
         # Random unitary matrix (rho is a density matrix so Hermitian so diagonalizable by a unitary matrix).
         Q = random_unitary_matrix(d_L_minus_l_plus_1) 
-        D = np.diag(random_eigenvalues_from_n_sphere(d_L_minus_l_plus_1)) # Uniform distribution, to be modified later. 
+        # D = np.diag(random_eigenvalues_from_n_sphere(d_L_minus_l_plus_1)) # Uniform distribution, to be modified later. 
+        D = np.diag(Dirichlet_distribution(d_L_minus_l_plus_1))
         rho_l_minus_one = Q @ D @ np.conj(Q).T
 
         # Initialize M randomly 
@@ -240,7 +241,8 @@ def produce_a_random_mps(L, d=2):
         d_l_minus_one = int(d**(l-1))
         # Random unitary matrix (rho is a density matrix so Hermitian so diagonalizable by a unitary matrix).
         Q = random_unitary_matrix(d_l_minus_one) 
-        D = np.diag(random_eigenvalues_from_n_sphere(d_l_minus_one)) # Uniform distribution, to be modified later. 
+        # D = np.diag(random_eigenvalues_from_n_sphere(d_l_minus_one)) # Uniform distribution, to be modified later. 
+        D = np.diag(Dirichlet_distribution(d_l_minus_one))
         rho_l_minus_one = Q @ D @ np.conj(Q).T
         
         # Find M minimising our objective function with the left normalization constraint. 
@@ -311,8 +313,12 @@ def random_point_on_the_n_sphere(n, r=1):
         coordinates[i] = r * product_sin * np.cos(angles[i])
     # Last coordinate xn with full product of sines
     coordinates[-1] = r * product_sin * np.sin(angles[-1])
-    
     return coordinates
+
+def Dirichlet_distribution(n):
+    # Step 1: Generate n random numbers from an exponential distribution
+    points = np.random.dirichlet(alpha=[1] * n)
+    return np.sort(points)[::-1]
 
 def random_eigenvalues_from_n_sphere(n: int, r=1)-> np.array:
     if n ==1:
@@ -579,7 +585,6 @@ def produce_a_random_mps_eigenvalues_in_a_disk_center_moving(L, d=2, t=1, diamet
         rho_l = rho_l_minus_one
 
     return list_M, list_objective_error, list_left_normalization_error, rho_middle
-
 
 def random_state_vector_from_mps_eigenvalues_in_a_disk(L, d=2, diameter_disk=0.01):
     list_M, _, _, _ = produce_a_random_mps_eigenvalues_in_a_disk(L, d, diameter_disk)
