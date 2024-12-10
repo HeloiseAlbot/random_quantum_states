@@ -211,8 +211,8 @@ def produce_a_random_mps(L, d=2):
         
         # Random unitary matrix (rho is a density matrix so Hermitian so diagonalizable by a unitary matrix).
         Q = random_unitary_matrix(d_L_minus_l_plus_1) 
-        # D = np.diag(random_eigenvalues_from_n_sphere(d_L_minus_l_plus_1)) # Uniform distribution, to be modified later. 
-        D = np.diag(Dirichlet_distribution(d_L_minus_l_plus_1))
+        D = np.diag(random_eigenvalues_from_n_sphere(d_L_minus_l_plus_1)) # Uniform distribution, to be modified later. 
+        # D = np.diag(Dirichlet_distribution(d_L_minus_l_plus_1))
         rho_l_minus_one = Q @ D @ np.conj(Q).T
 
         # Initialize M randomly 
@@ -241,8 +241,8 @@ def produce_a_random_mps(L, d=2):
         d_l_minus_one = int(d**(l-1))
         # Random unitary matrix (rho is a density matrix so Hermitian so diagonalizable by a unitary matrix).
         Q = random_unitary_matrix(d_l_minus_one) 
-        # D = np.diag(random_eigenvalues_from_n_sphere(d_l_minus_one)) # Uniform distribution, to be modified later. 
-        D = np.diag(Dirichlet_distribution(d_l_minus_one))
+        D = np.diag(random_eigenvalues_from_n_sphere(d_l_minus_one)) # Uniform distribution, to be modified later. 
+        # D = np.diag(Dirichlet_distribution(d_l_minus_one))
         rho_l_minus_one = Q @ D @ np.conj(Q).T
         
         # Find M minimising our objective function with the left normalization constraint. 
