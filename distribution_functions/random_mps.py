@@ -11,7 +11,7 @@ from itertools import product
 # Generate random state defined by the level of entanglement between the lattice sites
 def random_unitary_matrix(n):
     """
-    Generate a random complex matrix of size n x n.
+    Generate a random complex matrix of size n * n.
     Only taking the Q from the QR decomposition is wrong according to (page 7): 
     How to generate random matrices from the classical compact groups
     https://arxiv.org/abs/math-ph/0609050.
@@ -211,8 +211,9 @@ def produce_a_random_mps(L, d=2):
         
         # Random unitary matrix (rho is a density matrix so Hermitian so diagonalizable by a unitary matrix).
         Q = random_unitary_matrix(d_L_minus_l_plus_1) 
-        D = np.diag(random_eigenvalues_from_n_sphere(d_L_minus_l_plus_1)) # Uniform distribution, to be modified later. 
-        # D = np.diag(Dirichlet_distribution(d_L_minus_l_plus_1))
+        D = np.diag(random_eigenvalues_from_n_sphere(d_L_minus_l_plus_1)) 
+        # D = np.diag(Dirichlet_distribution(d_L_minus_l_plus_1, alpha=1))
+        # D = np.diag(squared_moduli_column_Haar_random_unitary(d_L_minus_l_plus_1))
         rho_l_minus_one = Q @ D @ np.conj(Q).T
 
         # Initialize M randomly 
@@ -241,8 +242,10 @@ def produce_a_random_mps(L, d=2):
         d_l_minus_one = int(d**(l-1))
         # Random unitary matrix (rho is a density matrix so Hermitian so diagonalizable by a unitary matrix).
         Q = random_unitary_matrix(d_l_minus_one) 
-        D = np.diag(random_eigenvalues_from_n_sphere(d_l_minus_one)) # Uniform distribution, to be modified later. 
-        # D = np.diag(Dirichlet_distribution(d_l_minus_one))
+        D = np.diag(random_eigenvalues_from_n_sphere(d_l_minus_one))  
+        # D = np.diag(Dirichlet_distribution(d_l_minus_one, alpha=1))
+        # D = np.diag(squared_moduli_column_Haar_random_unitary(d_l_minus_one))
+
         rho_l_minus_one = Q @ D @ np.conj(Q).T
         
         # Find M minimising our objective function with the left normalization constraint. 
@@ -314,11 +317,32 @@ def random_point_on_the_n_sphere(n, r=1):
     # Last coordinate xn with full product of sines
     coordinates[-1] = r * product_sin * np.sin(angles[-1])
     return coordinates
+    
 
-def Dirichlet_distribution(n):
+def Dirichlet_distribution(n, alpha=1):
     # Step 1: Generate n random numbers from an exponential distribution
-    points = np.random.dirichlet(alpha=[1] * n)
+    points = np.random.dirichlet(alpha=[alpha] * n)
     return np.sort(points)[::-1]
+
+def squared_moduli_column_Haar_random_unitary(n: int)-> np.array:
+    """
+    Return the squared modilu of complex elements os a column (the first column) of an
+    auxiliary ranodm unitary matrix drawn with respect to the Haar measure on U(n).
+    
+    Input:
+    n (int): the dimension of the vector
+    Output:
+    psi (np.array): vector of dimension n.
+    """
+    if n==1:
+        return np.array([1])
+    else:
+        U = unitary_group.rvs(n)
+        # Select the first column of the unitary matrix
+        psi = U[:, 0]
+        # Compute the squared moduli of psi
+        squared_moduli = abs(psi)**2
+        return squared_moduli
 
 def random_eigenvalues_from_n_sphere(n: int, r=1)-> np.array:
     if n ==1:
@@ -408,8 +432,8 @@ def random_point_on_the_n_sphere_in_a_disk(n: int, diameter_disk: float, angles_
     if angles_center.size != n-1:
         raise ValueError(f"The input array angles_center must be of size n-1.")
     rayon_disk = diameter_disk/2
-    if rayon_disk > min(math.asin(1/math.sqrt(n)), np.pi/4):
-        raise ValueError(f"The input value diameter_disk must be smaller than {2*math.asin(1/math.sqrt(n))} and pi/2")
+    # if rayon_disk > min(math.asin(1/math.sqrt(n)), np.pi/4):
+    #     raise ValueError(f"The input value diameter_disk must be smaller than {2*math.asin(1/math.sqrt(n))} and pi/2")
     # Generate the coordinates of the maximal
     if angles_center is None:
         print("Angles center is None")
@@ -527,10 +551,10 @@ def produce_a_random_mps_eigenvalues_in_a_disk_center_moving(L, d=2, t=1, diamet
 
     for l in range(L, int(L/2), -1): # l> L/2
         d_L_minus_l_plus_1 = int(d**(L-l+1))
-        if d_L_minus_l_plus_1>1:
-            minimum_value_rayon_l = min(t*math.acos(1/math.sqrt(d_L_minus_l_plus_1)), np.pi/2 - t*math.acos(1/math.sqrt(d_L_minus_l_plus_1)), t*math.asin(1/math.sqrt(d_L_minus_l_plus_1-1)),np.pi/4*(2-t))
-            if rayon_disk > minimum_value_rayon_l:
-                raise ValueError(f"Input parameter diameter_disk must be smaller than {2*minimum_value_rayon_l}.")
+        # if d_L_minus_l_plus_1>1:
+            # minimum_value_rayon_l = min(t*math.acos(1/math.sqrt(d_L_minus_l_plus_1)), np.pi/2 - t*math.acos(1/math.sqrt(d_L_minus_l_plus_1)), t*math.asin(1/math.sqrt(d_L_minus_l_plus_1-1)),np.pi/4*(2-t))
+            # if rayon_disk > minimum_value_rayon_l:
+            #     raise ValueError(f"Input parameter diameter_disk must be smaller than {2*minimum_value_rayon_l}.")
         angles_center_l = generate_angles_between_max_entangled_and_product_state_eigenvalues(d_L_minus_l_plus_1, t)
         s_i = np.square(random_point_on_the_n_sphere_in_a_disk(d_L_minus_l_plus_1, diameter_disk, angles_center_l))
         # Random unitary matrix (rho is a density matrix so Hermitian so diagonalizable by a unitary matrix).
@@ -558,10 +582,10 @@ def produce_a_random_mps_eigenvalues_in_a_disk_center_moving(L, d=2, t=1, diamet
     for l in range(int(L/2), 0, -1): #l <= L/2
         d_l = int(d**(l))
         d_l_minus_one = int(d**(l-1))
-        if d_l_minus_one > 1:
-            minimum_value_rayon_l = min(t*math.acos(1/math.sqrt(d_l_minus_one)), np.pi/2 - t*math.acos(1/math.sqrt(d_l_minus_one)), t*math.asin(1/math.sqrt(d_l_minus_one-1)),np.pi/4*(2-t))
-            if rayon_disk > minimum_value_rayon_l:
-                raise ValueError(f"Input parameter diameter_disk must be smaller than {2*minimum_value_rayon_l}.")
+        # if d_l_minus_one > 1:
+        #     minimum_value_rayon_l = min(t*math.acos(1/math.sqrt(d_l_minus_one)), np.pi/2 - t*math.acos(1/math.sqrt(d_l_minus_one)), t*math.asin(1/math.sqrt(d_l_minus_one-1)),np.pi/4*(2-t))
+        #     if rayon_disk > minimum_value_rayon_l:
+        #         raise ValueError(f"Input parameter diameter_disk must be smaller than {2*minimum_value_rayon_l}.")
         angles_center_l = generate_angles_between_max_entangled_and_product_state_eigenvalues(d_l_minus_one, t)
         s_i = np.square(random_point_on_the_n_sphere_in_a_disk(d_l_minus_one, diameter_disk, angles_center_l))
         # Random unitary matrix (rho is a density matrix so Hermitian so diagonalizable by a unitary matrix).
