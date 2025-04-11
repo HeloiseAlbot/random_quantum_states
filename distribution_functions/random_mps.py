@@ -99,38 +99,37 @@ def constraint_M_before_middle(M, d, l):
     Constraint function: sum_sigma M[sigma,:,:].H @ M[sigma,:,:] = Identity
     """
     M = M.reshape(d**l, d**l)
-    dimension_M = M.shape[0]
+    d_l = int(d**l)
 
-    identity = np.eye(dimension_M, dtype=np.complex128)
+    identity = np.eye(d_l, dtype=np.complex128)
     M_tensor = reshape_array_before_middle(M, d, l)
-    sum_product = np.zeros((int(dimension_M), int(dimension_M)), dtype=np.complex128)    
+    sum_product = np.zeros((d_l, d_l), dtype=np.complex128)    
     for sigma in range(d):
         M_sigma = M_tensor[sigma, :, :]
         sum_product += M_sigma.conj().T @ M_sigma
     
-    return np.linalg.norm(sum_product - identity, 'fro')  # Should equal 0 for valid M
+    return np.linalg.norm(sum_product - identity, 'fro')**2  # Should equal 0 for valid M
 
 def constraint_M_after_middle(M, d, l, L):
     """
     Constraint function: sum_sigma M[sigma,:,:].H @ M[sigma,:,:] = Identity
     """
-    dimension = d**(L-l+1)
-    M = M.reshape(dimension, dimension)
-    dimension_M = M.shape[0]
+    d_L_minus_l_plus_1 = d**(L-l+1)
+    d_L_minus_l = int(d**(L-l))
+    M = M.reshape(d_L_minus_l_plus_1, d_L_minus_l_plus_1)
 
-    identity = np.eye(int(dimension_M/d))
+    identity = np.eye(d_L_minus_l)
     M_tensor = reshape_array_after_middle(M, d, l)
-    sum_product = np.zeros((int(dimension_M/d), int(dimension_M/d)), dtype=np.complex128)
-    
+    sum_product = np.zeros((d_L_minus_l, d_L_minus_l), dtype=np.complex128)
     for sigma in range(d):
         M_sigma = M_tensor[sigma, :, :]
         sum_product += M_sigma.conj().T @ M_sigma
-    return np.linalg.norm(sum_product - identity, 'fro')  # Should equal 0 for valid M
+    return np.linalg.norm(sum_product - identity, 'fro')**2  # Should equal 0 for valid M
 
 def f_from_M_after_middle(M, rho_l, d, l, L):
     """
     M is of dimension (d^{n},d^{n})).
-    rho_l is of diemnsion (d^{n-1},d^{n-1}).
+    rho_l is of dimension (d^{n-1},d^{n-1}).
     Should return a matrix of shape (d^n, d^n).
     """
     dimension = d**(L-l+1)
@@ -166,7 +165,7 @@ def check_left_normalization_after_middle(M, d, l, L):
     for sigma in range(d):
         M_sigma = M_tensor[sigma, :, :]
         sum_product += M_sigma.conj().T @ M_sigma
-    return np.linalg.norm(sum_product - identity, 'fro')  # Should equal 0 for valid M
+    return np.linalg.norm(sum_product - identity, 'fro')**2  # Should equal 0 for valid M
 
 
 def check_left_normalization_before_middle(M, d, l):
@@ -174,17 +173,18 @@ def check_left_normalization_before_middle(M, d, l):
     We check the Frobenius norm of the constraint function: sum_sigma M[sigma,:,:].H @ M[sigma,:,:] = Identity
     It is for before the middle of the chain. 
     """
-    M = M.reshape(d**l, d**l)
-    dimension_M = M.shape[0]
+    d_l = int(d**l)
+    M = M.reshape(d_l, d_l)
+    d_l = int(d**l)
 
-    identity = np.eye(dimension_M)
+    identity = np.eye(d_l)
     M_tensor = reshape_array_before_middle(M, d, l)
-    sum_product = np.zeros((int(dimension_M), int(dimension_M)), dtype=np.complex128)    
+    sum_product = np.zeros((d_l, d_l), dtype=np.complex128)    
     for sigma in range(d):
         M_sigma = M_tensor[sigma, :, :]
         sum_product += M_sigma.conj().T @ M_sigma
     
-    return np.linalg.norm(sum_product - identity, 'fro')  # Should equal 0 for valid M
+    return np.linalg.norm(sum_product - identity, 'fro')**2  # Should equal 0 for valid M
 
 
 def produce_a_random_mps(L, d=2):
@@ -210,11 +210,12 @@ def produce_a_random_mps(L, d=2):
         d_L_minus_l_plus_1 = int(d**(L-l+1))
         
         # Random unitary matrix (rho is a density matrix so Hermitian so diagonalizable by a unitary matrix).
-        Q = random_unitary_matrix(d_L_minus_l_plus_1) 
+        # Q = random_unitary_matrix(d_L_minus_l_plus_1) 
         D = np.diag(random_eigenvalues_from_n_sphere(d_L_minus_l_plus_1)) 
         # D = np.diag(Dirichlet_distribution(d_L_minus_l_plus_1, alpha=1))
         # D = np.diag(squared_moduli_column_Haar_random_unitary(d_L_minus_l_plus_1))
-        rho_l_minus_one = Q @ D @ np.conj(Q).T
+        # rho_l_minus_one = Q @ D @ np.conj(Q).T
+        rho_l_minus_one = D 
 
         # Initialize M randomly 
         M_initial = np.random.randn(d_L_minus_l_plus_1, d_L_minus_l_plus_1) + 1j * np.random.randn(d_L_minus_l_plus_1, d_L_minus_l_plus_1)
@@ -241,12 +242,12 @@ def produce_a_random_mps(L, d=2):
         d_l = int(d**(l))
         d_l_minus_one = int(d**(l-1))
         # Random unitary matrix (rho is a density matrix so Hermitian so diagonalizable by a unitary matrix).
-        Q = random_unitary_matrix(d_l_minus_one) 
+        # Q = random_unitary_matrix(d_l_minus_one) 
         D = np.diag(random_eigenvalues_from_n_sphere(d_l_minus_one))  
         # D = np.diag(Dirichlet_distribution(d_l_minus_one, alpha=1))
         # D = np.diag(squared_moduli_column_Haar_random_unitary(d_l_minus_one))
-
-        rho_l_minus_one = Q @ D @ np.conj(Q).T
+        rho_l_minus_one = D
+        # rho_l_minus_one = Q @ D @ np.conj(Q).T
         
         # Find M minimising our objective function with the left normalization constraint. 
         M_initial = np.random.randn(d_l, d_l) + 1j * np.random.randn(d_l, d_l)
@@ -349,10 +350,11 @@ def random_eigenvalues_from_n_sphere(n: int, r=1)-> np.array:
         return np.array([[1]])
     else:
         coordinates = random_point_on_the_n_sphere(n, r)
-        return np.sort(np.square(coordinates))[::-1]
+        return coordinates
+        # return np.sort(np.square(coordinates))[::-1]
 
 def random_state_vector_from_mps(L, d=2)-> np.array:
-    list_M, _, _, _ = produce_a_random_mps(L, d)
+    list_M, list_objective_error, list_left_normalization_error, _ = produce_a_random_mps(L, d)
     state = vector_state_from_mps(list_M, L, d)
     return state
 
