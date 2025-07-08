@@ -187,7 +187,7 @@ def check_left_normalization_before_middle(M, d, l):
     return np.linalg.norm(sum_product - identity, 'fro')**2  # Should equal 0 for valid M
 
 
-def produce_a_random_mps(L, d=2):
+def produce_a_random_mps(L=int, d=2):
     """
     Input:
     L (int): number of site (assumed even for simplicity for the moment).
@@ -210,12 +210,12 @@ def produce_a_random_mps(L, d=2):
         d_L_minus_l_plus_1 = int(d**(L-l+1))
         
         # Random unitary matrix (rho is a density matrix so Hermitian so diagonalizable by a unitary matrix).
-        # Q = random_unitary_matrix(d_L_minus_l_plus_1) 
+        Q = random_unitary_matrix(d_L_minus_l_plus_1) 
         D = np.diag(random_eigenvalues_from_n_sphere(d_L_minus_l_plus_1)) 
         # D = np.diag(Dirichlet_distribution(d_L_minus_l_plus_1, alpha=1))
         # D = np.diag(squared_moduli_column_Haar_random_unitary(d_L_minus_l_plus_1))
-        # rho_l_minus_one = Q @ D @ np.conj(Q).T
-        rho_l_minus_one = D 
+        rho_l_minus_one = Q @ D @ np.conj(Q).T
+        # rho_l_minus_one = D 
 
         # Initialize M randomly 
         M_initial = np.random.randn(d_L_minus_l_plus_1, d_L_minus_l_plus_1) + 1j * np.random.randn(d_L_minus_l_plus_1, d_L_minus_l_plus_1)
@@ -242,12 +242,12 @@ def produce_a_random_mps(L, d=2):
         d_l = int(d**(l))
         d_l_minus_one = int(d**(l-1))
         # Random unitary matrix (rho is a density matrix so Hermitian so diagonalizable by a unitary matrix).
-        # Q = random_unitary_matrix(d_l_minus_one) 
+        Q = random_unitary_matrix(d_l_minus_one) 
         D = np.diag(random_eigenvalues_from_n_sphere(d_l_minus_one))  
         # D = np.diag(Dirichlet_distribution(d_l_minus_one, alpha=1))
         # D = np.diag(squared_moduli_column_Haar_random_unitary(d_l_minus_one))
-        rho_l_minus_one = D
-        # rho_l_minus_one = Q @ D @ np.conj(Q).T
+        # rho_l_minus_one = D
+        rho_l_minus_one = Q @ D @ np.conj(Q).T
         
         # Find M minimising our objective function with the left normalization constraint. 
         M_initial = np.random.randn(d_l, d_l) + 1j * np.random.randn(d_l, d_l)
@@ -356,7 +356,7 @@ def random_eigenvalues_from_n_sphere(n: int, r=1)-> np.array:
 def random_state_vector_from_mps(L, d=2)-> np.array:
     list_M, list_objective_error, list_left_normalization_error, _ = produce_a_random_mps(L, d)
     state = vector_state_from_mps(list_M, L, d)
-    return state
+    return state, list_objective_error, list_left_normalization_error
 
 def product_state_eigenvalues(n: int) ->np.array:
     eigenvalues = np.zeros(n)
@@ -456,6 +456,54 @@ def random_point_on_the_n_sphere_in_a_disk(n: int, diameter_disk: float, angles_
     else:
         new_coordinates[-1] = r * product_sin * np.sin(new_angles[-1])
     return new_coordinates
+
+
+def gaussian_point_on_the_n_sphere_in_a_disk(n: int, standard_deviation: float, angles_center: np.array, r: float=1):
+    """
+    Input:
+    n (int): dimension of the space of the n-sphere. We should have angles_center.size = n-1. 
+    standard_deviation (float): the standard deviation of the Gaussian distribution (in radian). 
+                    
+                    We place the simulation in the positive orthant. SO I NEED TO MODIFY THE CODE TO 
+                    IMPOSE THAT. 
+                    Then, in order to keep a uniform distribution on the disk of the n-sphere we should have: 
+                    epsilon_over_2 > math.asin(1/math.sqrt(n)), hence the ValueError line. 
+    angles_center (np.array): coordinates of the point with is the center of the disk in which are taken 
+                    the random point. By default, it will be the point giving the maximally mixed states. 
+    r (float): rayon of the n-sphere. By default, 1.
+
+    Output: 
+    new_coordinates (np.array): A random point distributed as a Gaussian around the point whose coordinates 
+                    are angles_center with standard deviation standard_deviation. The point is given via its 
+                    Cartesian coordinates. 
+    """
+    if angles_center.size != n-1:
+        raise ValueError(f"The input array angles_center must be of size n-1.")
+
+    # if rayon_disk > min(math.asin(1/math.sqrt(n)), np.pi/4):
+    #     raise ValueError(f"The input value diameter_disk must be smaller than {2*math.asin(1/math.sqrt(n))} and pi/2")
+    # Generate the coordinates of the maximal
+    if angles_center is None:
+        print("Angles center is None")
+        angles_center = generate_angle_maximally_entangled_eigenvalues(n)
+    # Step 1: Generate the random angles
+    delta_angles =  np.random.normal(0, standard_deviation, n-1) # Δφ1, Δφ2, ..., Δφ_{n-1} in Gaussian around 0 
+    # Step 2: Compute x1, x2, ..., xn
+    new_angles = angles_center + delta_angles
+    new_coordinates = np.zeros(n)
+    product_sin = 1  # Initialize the cumulative product of sin terms
+    for i in range(n - 1):
+        if i > 0:
+            product_sin *= np.sin(new_angles[i - 1])
+        new_coordinates[i] = r * product_sin * np.cos(new_angles[i])
+    # Last coordinate xn with full product of sines
+    if n == 1:
+        new_coordinates[-1] = r * product_sin
+    else:
+        new_coordinates[-1] = r * product_sin * np.sin(new_angles[-1])
+    return new_coordinates
+
+
 
 def produce_a_random_mps_eigenvalues_in_a_disk(L, d=2, diameter_disk = 0.01):
     """
