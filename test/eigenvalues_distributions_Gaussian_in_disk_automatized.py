@@ -6,9 +6,9 @@ from scipy.stats import linregress
 
 from distribution_functions.random_mps import gaussian_point_on_the_n_sphere_in_a_disk, generate_angle_maximally_entangled_eigenvalues, random_point_on_the_n_sphere_in_a_disk
 
-n_start = 10
-n_stop = 10000
-n_increment = 10
+n_start = 1000
+n_stop = 5000
+n_increment = 500
 
 n_simulations = 1000
 worst_r2_list = []
@@ -20,7 +20,7 @@ for n in range(n_start, n_stop, n_increment):
     lambda_values = []
     angles_center = generate_angle_maximally_entangled_eigenvalues(n)
     ##################### Linearly spaced standard deviations #####################
-    std_devs = np.linspace(0.2, 0.001, num=50)
+    std_devs = np.linspace(0.2, 0.001, num=100)
     slopes = []
     r_squared_vals = []
 
@@ -58,7 +58,7 @@ n_array = np.array(n_list)
 worst_diameter_array = np.array(worst_diameter_list)
 worst_r2_array = np.array(worst_r2_list)
 
-np.savez('rupture_point.npz', n_array=n_array, worst_diameter_array=worst_diameter_array, worst_r2_array=worst_r2_array)
+np.savez(f'rupture_point_from_{n_start}_to_{n_stop}_n_simulations{n_simulations}.npz', n_array=n_array, worst_diameter_array=worst_diameter_array, worst_r2_array=worst_r2_array)
 
 
 
