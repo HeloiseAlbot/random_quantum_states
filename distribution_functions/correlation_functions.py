@@ -2,6 +2,11 @@ import numpy as np
 from random_mps import (produce_a_random_mps)
 import os 
 
+"""
+Code based on the theory from "The density-matrix renormalization group in the age of 
+the matrix product states" by Ulrich Schollwöck §4.2.2.
+"""
+
 # Pauli-Z matrix
 Z = np.array([[1, 0], [0, -1]])
 I = np.eye(2)
