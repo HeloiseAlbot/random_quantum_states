@@ -93,7 +93,7 @@ d = 2 # Dimension of the local Hilbert space.
 all_corr_matrices = np.zeros((n_samples, N, N))
 
 for i in range(n_samples):
-    corr_mat = average_correlation_matrix2(N, 1)
+    corr_mat = average_correlation_matrix2(N, d, 1)
     all_corr_matrices[i] = corr_mat
 
 
