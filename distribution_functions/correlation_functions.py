@@ -4,32 +4,38 @@ import os
 
 """
 Code based on the theory from "The density-matrix renormalization group in the age of 
-the matrix product states" by Ulrich Schollwöck §4.2.2.
+the matrix product states" by Ulrich Schollwöck §4.2.1.
 """
 
 # Pauli-Z matrix
 Z = np.array([[1, 0], [0, -1]])
 I = np.eye(2)
 
-def build_transfer_matrix(A, Op):
+def contract1(A, C, Op=None):
     """
-    Builds the transfer matrix for a single site.
+    WRITE WHAT IT DOES.
     A: tensor of shape (d, D_left, D_right)
+    C: mtrix of dimension (D_right, D_right)
     O: operator of shape (d, d)
     """
+    
     d, Dl, Dr = A.shape
-    T = np.zeros((Dl * Dl, Dr * Dr), dtype=np.complex128)
-    for s in range(d):
-        A_s = A[s]             # shape (Dl, Dr)
-        for sp in range(d):
-            coeff = Op[sp, s]
-            if coeff != 0:
-                A_sp_conj = np.conj(A[sp])  # shape (Dl, Dr) 
-                kron = np.kron(A_s, A_sp_conj)  # Kronecker product of two arrays. shape (Dl*Dl, Dr*Dr)
-                T += coeff * kron
-    return T  # shape (Dl^2, Dr^2)
+    new_C = np.zeros((Dr, Dr),  dtype=np.complex128)
+    if Op is None:
+        for s in range(d):
+            A_s = A[s]
+            A_s_dagger = A_s.conj().T  # shape (Dr, Dl)
+            new_C += A_s_dagger @ C @ A[s] 
+        return new_C
+    else: # Apply the operator
+        for s in range(d):
+            A_s = A[s]
+            A_s_dagger = A_s.conj().T  # shape (Dr, Dl)
+            for sp in range(d):
+                new_C +=  Op[s,sp] * A_s_dagger @ C @ A[sp]
+        return new_C # shape (Dl, Dl)
 
-def compute_C_zz(list_A, i, j):
+def compute_C_zz2(list_A, i, j):
     """
     Compute C^{zz}(i,j) = <psi|Z_i Z_j|psi>
     list_A: list of tensors (d, D_left, D_right)
@@ -37,27 +43,24 @@ def compute_C_zz(list_A, i, j):
     L = len(list_A)
     assert 0 <= i < j < L
 
-    env = np.array([[1.0]], dtype=np.complex128)  # scalar identity
+    C = np.array([[1.0]], dtype=np.complex128)  # scalar identity
 
     for n in range(0, i):
-        T = build_transfer_matrix(list_A[n], I)
-        env = env @ T
+        C = contract1(list_A[n], C, None)
 
-    T = build_transfer_matrix(list_A[i], Z)
-    env = env @ T
+    C = contract1(list_A[i], C, Z)
 
     for n in range(i + 1, j):
-        T = build_transfer_matrix(list_A[n], I)
-        env = env @ T
+        C = contract1(list_A[n], C, None)
 
-    T = build_transfer_matrix(list_A[j], Z)
-    env = env @ T
+    C = contract1(list_A[j], C, Z)
 
     for n in range(j + 1, L):
-        T = build_transfer_matrix(list_A[n], I)
-        env = env @ T
+        C = contract1(list_A[n], C, None)
 
-    return np.trace(env)
+    return C
+
+
 
 def generate_random_MPS(L, d=2):
     """
@@ -67,30 +70,30 @@ def generate_random_MPS(L, d=2):
     list_M, _, _, _ = produce_a_random_mps(L, d)
     return list_M
 
-def average_correlation_matrix(L, num_samples):
+def average_correlation_matrix2(L, d, num_samples):
     """
     Compute averaged C^{zz}(i,j) matrix for all pairs (i, j)
     """
     corr_matrix = np.zeros((L, L))
     for _ in range(num_samples):
-        list_M = generate_random_MPS(L)
+        list_M = generate_random_MPS(L, d) 
         for i in range(L):
             for j in range(i + 1, L):
-                c = compute_C_zz(list_M, i, j).real
+                c = compute_C_zz2(list_M, i, j).real
                 corr_matrix[i, j] += c
                 corr_matrix[j, i] += c  # symmetric
     corr_matrix /= num_samples
     return corr_matrix
 
-
 #  Example usage:
-N = 15
-n_samples = 1
+N = 10
+n_samples = 15
+d = 2 # Dimension of the local Hilbert space. 
 
 all_corr_matrices = np.zeros((n_samples, N, N))
 
 for i in range(n_samples):
-    corr_mat = average_correlation_matrix(N, 1)
+    corr_mat = average_correlation_matrix2(N, 1)
     all_corr_matrices[i] = corr_mat
 
 
