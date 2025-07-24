@@ -1,5 +1,5 @@
 import numpy as np
-from random_mps import (produce_a_random_mps)
+from random_mps import (produce_a_random_mps, produce_a_random_mps_eigenvalues_in_a_disk)
 import os 
 
 """
@@ -15,10 +15,9 @@ def contract1(A, C, Op=None):
     """
     WRITE WHAT IT DOES.
     A: tensor of shape (d, D_left, D_right)
-    C: mtrix of dimension (D_right, D_right)
+    C: matrix of dimension (D_right, D_right)
     O: operator of shape (d, d)
     """
-    
     d, Dl, Dr = A.shape
     new_C = np.zeros((Dr, Dr),  dtype=np.complex128)
     if Op is None:
@@ -60,40 +59,60 @@ def compute_C_zz2(list_A, i, j):
 
     return C
 
-
+def generate_random_MPS_eigenvalues_in_a_disk(L, d, standard_derivation):
+    """
+    Generate a random MPS with physical dimension d and L sites.
+    Returns a list of tensors with shape (2, D_left, D_right)
+    """
+    list_M, _, _, _ = produce_a_random_mps_eigenvalues_in_a_disk(L, d, standard_derivation)
+    return list_M
 
 def generate_random_MPS(L, d=2):
     """
-    Generate a random MPS with physical dimension 2, L sites, and bond dimension D.
+    Generate a random MPS with physical dimension d and L sites.
     Returns a list of tensors with shape (2, D_left, D_right)
     """
     list_M, _, _, _ = produce_a_random_mps(L, d)
     return list_M
 
-def average_correlation_matrix2(L, d, num_samples):
+def average_correlation_matrix2(L, d, num_samples, standard_derivation=None):
     """
     Compute averaged C^{zz}(i,j) matrix for all pairs (i, j)
     """
     corr_matrix = np.zeros((L, L))
-    for _ in range(num_samples):
-        list_M = generate_random_MPS(L, d) 
-        for i in range(L):
-            for j in range(i + 1, L):
-                c = compute_C_zz2(list_M, i, j).real
-                corr_matrix[i, j] += c
-                corr_matrix[j, i] += c  # symmetric
-    corr_matrix /= num_samples
-    return corr_matrix
+    if standard_derivation is None:
+        for _ in range(num_samples):
+            list_M = generate_random_MPS(L, d) 
+            for i in range(L):
+                for j in range(i + 1, L):
+                    c = compute_C_zz2(list_M, i, j).real
+                    corr_matrix[i, j] += c
+                    corr_matrix[j, i] += c  # symmetric
+        corr_matrix /= num_samples
+        return corr_matrix
+    else:
+        for _ in range(num_samples):
+            list_M = generate_random_MPS_eigenvalues_in_a_disk(L, d, standard_derivation)
+            for i in range(L):
+                for j in range(i + 1, L):
+                    c = compute_C_zz2(list_M, i, j).real
+                    corr_matrix[i, j] += c
+                    corr_matrix[j, i] += c  # symmetric
+        corr_matrix /= num_samples
+        return corr_matrix
+
+
+
 
 #  Example usage:
 N = 10
-n_samples = 15
+n_samples = 100
 d = 2 # Dimension of the local Hilbert space. 
-
+standard_derivation = 0.25
 all_corr_matrices = np.zeros((n_samples, N, N))
 
 for i in range(n_samples):
-    corr_mat = average_correlation_matrix2(N, d, 1)
+    corr_mat = average_correlation_matrix2(N, d, 1, standard_derivation)
     all_corr_matrices[i] = corr_mat
 
 
@@ -101,4 +120,5 @@ for i in range(n_samples):
 all_corr_matrices = np.array(all_corr_matrices)
 
 # Save to file
-np.save(f"corr_matrices_N{N}_n_samples{n_samples}.npy", all_corr_matrices)
+np.save(f"corr_matrices_N{N}_n_samples{n_samples}_standard_deviation{standard_derivation}.npy", all_corr_matrices)
+# np.save(f"corr_matrices_N{N}_n_samples{n_samples}.npy", all_corr_matrices)
