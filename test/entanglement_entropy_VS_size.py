@@ -11,6 +11,7 @@ d = 2  # local dimension, e.g., 2 for qubits
 l_values = range(1, 31)  # l from 1 to 100
 S_values = []
 # standard_deviation = 0.001
+n_samples = 20  # Number of samples to average over
 
 
 # Functions to compute the standard derivation.
@@ -59,28 +60,34 @@ def S_von_neumann(eigvals, base=np.e):
     return -np.sum(eigvals * np.log(eigvals)) / np.log(base)
 
 
+S_values = []
 
 for l in l_values:
-    n = d ** l  # Hilbert space dimension of subsystem
-    # standard_deviation = standard_deviation_rupture_pt_inverse_root(n)
-    # angles_center = generate_angle_maximally_entangled_eigenvalues(n)
-    # eigvals = np.square(gaussian_point_on_the_n_sphere_in_a_disk(n, standard_deviation, angles_center))  # returns n eigenvalues of reduced density matrix
-    eigvals = np.square(random_point_on_the_n_sphere(n, r=1))
-    S = S_von_neumann(eigvals, base=2)  # base-2 for bits
-    S_values.append(S)
+    n = d ** l  # Dimension of the reduced density matrix
+    S_total = 0.0
+    for _ in range(n_samples):
+        eigvals = np.square(random_point_on_the_n_sphere(n, r=1))  # random pure state reduced density spectrum
+        # standard_deviation = standard_deviation_rupture_pt_inverse_root(n)
+        # angles_center = generate_angle_maximally_entangled_eigenvalues(n)
+        # eigvals = np.square(gaussian_point_on_the_n_sphere_in_a_disk(n, standard_deviation, angles_center))  # returns n eigenvalues of reduced density matrix
+        S_sample = S_von_neumann(eigvals, base=2)  # base 2 → entropy in bits
+        S_total += S_sample
+    S_avg = S_total / n_samples
+    S_values.append(S_avg)
 
 # Save entropy values
-np.save(f"S_values_for_standard_deviation_at_rupture_pt_power_law.npy", S_values)
+np.save(f"S_values_for_the_whole_orthant_n_samples{n_samples}.npy", S_values)
+
 
 # Plot
 plt.figure(figsize=(8, 5))
-plt.plot(l_values, S_values, 'o-', label='Entanglement entropy $S(\ell)$')
+plt.plot(l_values, S_values, 'o-', label=f'Avg Entanglement Entropy ($n={n_samples}$ samples)')
 plt.xlabel('Subsystem size $\ell$')
 plt.ylabel('Entanglement entropy $S(\ell)$')
-plt.title('Entanglement Entropy vs Subsystem Size')
-plt.grid(True)
+plt.title('Averaged Entanglement Entropy vs Subsystem Size')
 plt.legend()
 plt.tight_layout()
+plt.grid(True)
 # plt.savefig(f"entanglement_entropy_VS_size_for_standard_deviation_at_rupture_pt_power_law_plus_constant.png")
-plt.savefig(f"entanglement_entropy_VS_size_whole_positive_orthant.png")
+plt.savefig(f"entanglement_entropy_VS_size_whole_positive_orthant_n_samples{n_samples}.png")
 plt.show()

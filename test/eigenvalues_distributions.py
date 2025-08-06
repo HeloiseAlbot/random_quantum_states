@@ -6,7 +6,7 @@ from scipy.stats import linregress
 
 from distribution_functions.random_mps import random_eigenvalues_from_n_sphere
 
-n = 100
+n = 64
 n_simulations = 1000
 lambda_values = []
 
@@ -58,13 +58,13 @@ ax.plot(
     color='red', 
     linestyle='--',
     linewidth=2,
-    label=r"Linear regression ($y=a*i+b$)")
+    label=f'Linear regression ($y={slope:.3f}*i+{intercept:.3f}$)')
 # Log scale for y-axis
 ax.set_yscale("log")
 # Labels and title
 ax.set_xlabel("Index $i$", fontsize=20)
 ax.set_ylabel(r"$\langle \lambda_i \rangle$", fontsize=20)
-# ax.set_title(f"Average of sorted eigenvalues $\lambda_i$ over {n_simulations} simulations", fontsize=15)
+ax.set_title(f"Average values of the sorted eigenvalues: uniform distribution on the whole orthant", fontsize=13)
 # Ticks
 ax.tick_params(axis='both', which='major', labelsize=16)
 # Legend
@@ -78,5 +78,5 @@ plt.show()
 
 
 # Save the plot in the same directory as this script
-plt.savefig("lambda_plot6_logscale_reglin.png")
+plt.savefig(f"lambda_plot_reglin_whole_orthant_n{n}_logscale.png")
 plt.show()

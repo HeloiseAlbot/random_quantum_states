@@ -457,6 +457,48 @@ def random_point_on_the_n_sphere_in_a_disk(n: int, diameter_disk: float, angles_
         new_coordinates[-1] = r * product_sin * np.sin(new_angles[-1])
     return new_coordinates
 
+def random_point_on_the_n_sphere_in_an_annulus(n: int, int_diameter_disk: float, annulus_width: float , angles_center: np.array, r: float=1):
+    """
+    Input:
+    n (int): dimension of the space of the n-sphere. We should have angles_center.size = n-1. 
+    int_diameter_disk: r of the annulus
+    annulus_width: R-r of the annulus
+    angles_center (np.array): coordinates of the point with is the center of the disk in which are taken 
+                the random point. By default, it will be the point giving the maximally mixed states. 
+
+    Output: 
+    new_coordinates (np.array): A random point uniformly distributed in the annulus of interior radius 
+                    r=int_diameter_disk/2 and exterior radius R = r + annulus_width on the n-sphere.
+                    The center of the annulus is the point whose coordinates are angles_center 
+                    The point is given via its Cartesian coordinates. 
+    """
+    # Generate the coordinates of the maximal
+    if angles_center is None:
+        angles_center = generate_angle_maximally_entangled_eigenvalues(n)
+    if angles_center.size != n-1:
+        raise ValueError(f"The input array angles_center must be of size n-1.")
+    int_rayon = int_diameter_disk/2
+    # if rayon_disk > min(math.asin(1/math.sqrt(n)), np.pi/4):
+    #     raise ValueError(f"The input value diameter_disk must be smaller than {2*math.asin(1/math.sqrt(n))} and pi/2")
+
+    # Step 1: Generate the random angles
+    position_in_annulus = np.random.uniform( -annulus_width, annulus_width, n - 1)
+    delta_angles = position_in_annulus + int_rayon*position_in_annulus/abs(position_in_annulus)  
+    # Step 2: Compute x1, x2, ..., xn
+    new_angles = angles_center + delta_angles
+    new_coordinates = np.zeros(n)
+    product_sin = 1  # Initialize the cumulative product of sin terms
+    for i in range(n - 1):
+        if i > 0:
+            product_sin *= np.sin(new_angles[i - 1])
+        new_coordinates[i] = r * product_sin * np.cos(new_angles[i])
+    # Last coordinate xn with full product of sines
+    if n == 1:
+        new_coordinates[-1] = r * product_sin
+    else:
+        new_coordinates[-1] = r * product_sin * np.sin(new_angles[-1])
+    return new_coordinates
+
 
 def gaussian_point_on_the_n_sphere_in_a_disk(n: int, standard_deviation: float, angles_center: np.array, r: float=1):
     """
@@ -502,6 +544,8 @@ def gaussian_point_on_the_n_sphere_in_a_disk(n: int, standard_deviation: float, 
     else:
         new_coordinates[-1] = r * product_sin * np.sin(new_angles[-1])
     return new_coordinates
+
+
 
 
 
