@@ -6,7 +6,7 @@ from scipy.stats import linregress
 from distribution_functions.random_mps import gaussian_point_on_the_n_sphere_in_a_disk, generate_angle_maximally_entangled_eigenvalues, random_point_on_the_n_sphere_in_a_disk
 
 n = 64
-sigma_limit = 0.3
+sigma_limit = 1
 n_simulations = 1000
 lambda_values = []
 angles_center = generate_angle_maximally_entangled_eigenvalues(n)
@@ -14,7 +14,7 @@ angles_center = generate_angle_maximally_entangled_eigenvalues(n)
 
 
 ##################### Plot of one sd #####################
-# standard_deviation = 0.0001
+# standard_deviation = 0.9
        
 
 # for sim in range(n_simulations):
@@ -49,7 +49,7 @@ angles_center = generate_angle_maximally_entangled_eigenvalues(n)
 
 
 # # # Save the plot in the same directory as this script
-# plt.savefig(f"lambda_plot_gaussian_n{n}_standard_deviation{standard_deviation}logscale_reglin_with_truncationchanging.png")
+# plt.savefig(f"lambda_plot_gaussian_n{n}_standard_deviation{standard_deviation}logscale_reglin_with_truncationchanging_corrected.png")
 # plt.show()
 
 
@@ -104,7 +104,7 @@ angles_center = generate_angle_maximally_entangled_eigenvalues(n)
 
 
 ##################### Linearly spaced standard deviations #####################
-std_devs = np.linspace(sigma_limit, 0.001, num=50)
+std_devs = np.linspace(sigma_limit, 0.5, num=100)
 
 slopes = []
 r_squared_vals = []
@@ -151,7 +151,7 @@ plt.figtext(0.5, -0.05,
             wrap=True, horizontalalignment='center', fontsize=10)
 
 plt.tight_layout()
-plt.savefig(f"sebastian_plot_more_precised_n{n}_sigmalimit_{sigma_limit}_withtrucationchanging.png", bbox_inches='tight')
+plt.savefig(f"sebastian_plot_more_precised_n{n}_sigmalimit_{sigma_limit}_withtrucationchanging_corrected.png", bbox_inches='tight')
 plt.show()
 
 

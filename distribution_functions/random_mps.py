@@ -530,8 +530,9 @@ def gaussian_point_on_the_n_sphere_in_a_disk(n: int, standard_deviation: float, 
     # Step 1: Generate the random angles
     delta_angles = np.zeros(n-1)
     for i in range(1, n):
-        limit_orthant =  np.arcsin(1 / np.sqrt(n-i+1))
-        lower, upper = -limit_orthant, limit_orthant
+        limit_orthant_plus =  np.arcsin(1 / np.sqrt(n-i+1))
+        limit_orthant_minus =  np.arccos(1 / np.sqrt(n-i+1))
+        lower, upper = -limit_orthant_minus, limit_orthant_plus
         # Compute truncation bounds in standard normal units
         a_, b_ = (lower ) / standard_deviation, (upper) / standard_deviation
         delta_angles[i-1] = truncnorm.rvs(a_, b_, loc=0, scale=standard_deviation, size=1)# Δφ1, Δφ2, ..., Δφ_{n-1} in Gaussian around 0 
