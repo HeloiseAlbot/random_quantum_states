@@ -278,7 +278,7 @@ def produce_a_random_mps(L=int, d=2):
 
     return list_M, list_objective_error, list_left_normalization_error, rho_middle
 
-def recursive_svd(M, threshold, lapack_driver = 'gesvd'):
+def recursive_svd(M, threshold, _verbosity: int = VLevel.INFO, lapack_driver = 'gesvd'):
 
     U, S, Vh = svd(M, lapack_driver = lapack_driver)
 
@@ -298,7 +298,7 @@ def recursive_svd(M, threshold, lapack_driver = 'gesvd'):
     # If there are singular valus below threshold, recursively call svd for this subspace
     if i_threshold < len(S):
 
-        print("In recursive svd, entering sublayer at idx {} of {} singular values".format(i_threshold, len(S)), flush = True)
+        vprint("In recursive svd, entering sublayer at idx {} of {} singular values".format(i_threshold, len(S)), _verbosity, VLevel.DEBUG)
 
         U_reduced = U[:,i_threshold:]
         Vh_reduced = Vh[i_threshold:,:]
@@ -312,7 +312,7 @@ def recursive_svd(M, threshold, lapack_driver = 'gesvd'):
 
     return U, S, Vh
 
-def produce_a_random_mps2(L: int, chi_max: int, d: int = 2, _verbosity: int = VLevel.INFO):
+def produce_random_mps(L: int, chi_max: int, d: int = 2, _verbosity: int = VLevel.INFO):
 
     def get_max_bond_dim(l: int):
         '''
@@ -350,7 +350,7 @@ def produce_a_random_mps2(L: int, chi_max: int, d: int = 2, _verbosity: int = VL
         A = np.conj(Q.T) @ np.kron(np.eye(d), np.diag(rho_l)) @ Q
 
         vprint("Inverting A = Q^+ rho_l Q, dim(A) = {} x {}".format(*A.shape), _verbosity, VLevel.DEBUG)
-        U, S, Vh = recursive_svd(A, 1e-14)
+        U, S, Vh = recursive_svd(A, 1e-14, _verbosity = _verbosity)
         V = np.conj(Vh.T) @ np.diag(np.sqrt(1.0 / S)) @ np.conj(U.T)
         Mfused = Q @ V
 
