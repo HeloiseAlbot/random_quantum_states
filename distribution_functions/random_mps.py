@@ -312,7 +312,7 @@ def recursive_svd(M, threshold, lapack_driver = 'gesvd'):
 
     return U, S, Vh
 
-def produce_a_random_mps2(L: int, chi_max: int, d: int = 2, _verbosity: int = VLevel.DEBUG):
+def produce_a_random_mps2(L: int, chi_max: int, d: int = 2, _verbosity: int = VLevel.INFO):
 
     def get_max_bond_dim(l: int):
         '''
@@ -322,6 +322,7 @@ def produce_a_random_mps2(L: int, chi_max: int, d: int = 2, _verbosity: int = VL
 
     rho_l = np.array([1.0])
     list_M = list()
+    list_rho = list()
 
     for l in range(L):
 
@@ -355,6 +356,7 @@ def produce_a_random_mps2(L: int, chi_max: int, d: int = 2, _verbosity: int = VL
 
         # Get next eigenvalue distribution
         rho_l = np.abs(random_eigenvalues_from_n_sphere(right_chi_max))
+        list_rho.append(rho_l)
 
         # now decompose Mfused to geht actual site tensors
         M_l = np.zeros([d, left_chi_max, right_chi_max], dtype =complex)
@@ -365,7 +367,7 @@ def produce_a_random_mps2(L: int, chi_max: int, d: int = 2, _verbosity: int = VL
 
         list_M.append(np.copy(M_l))
 
-    return list_M
+    return list_M, list_rho
 
 
 def vector_state_from_mps(list_M: list, L:int, d=2)->np.array:
