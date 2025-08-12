@@ -3,9 +3,19 @@ import math
 
 from scipy.optimize import root
 from scipy.optimize import minimize
-from scipy.linalg import block_diag, eigh
+from scipy.linalg import block_diag, eigh, svd
 from scipy.stats import unitary_group, norm, truncnorm
 from itertools import product
+from enum import Enum
+
+class VLevel(Enum):
+    QUIET = 0
+    INFO = 1
+    DEBUG = 2
+
+def vprint(_msg: str, _verbosity: VLevel = VLevel.QUIET, _min_verbosity: VLevel = VLevel.QUIET):
+    if (_verbosity.value > VLevel.QUIET.value) and (_verbosity.value >= _min_verbosity.value):
+        print(_msg, flush = True)
 
 # Generate random state defined by the level of entanglement between the lattice sites
 def random_unitary_matrix(n):
@@ -267,6 +277,95 @@ def produce_a_random_mps(L=int, d=2):
         rho_l = rho_l_minus_one
 
     return list_M, list_objective_error, list_left_normalization_error, rho_middle
+
+def recursive_svd(M, threshold, lapack_driver = 'gesvd'):
+
+    U, S, Vh = svd(M, lapack_driver = lapack_driver)
+
+    # First sort singular values to ensure decreasing singular values
+    sort_idxs = np.argsort(S)[::-1]
+    U = U[:, sort_idxs]
+    S = S[sort_idxs]
+    Vh = Vh[sort_idxs,:]
+
+    # Now look for threshold singular value
+    i_threshold = len(S)
+    for idx in range(i_threshold):
+        if S[idx]/S[0] < threshold:
+            i_threshold = idx
+            break
+
+    # If there are singular valus below threshold, recursively call svd for this subspace
+    if i_threshold < len(S):
+
+        print("In recursive svd, entering sublayer at idx {} of {} singular values".format(i_threshold, len(S)), flush = True)
+
+        U_reduced = U[:,i_threshold:]
+        Vh_reduced = Vh[i_threshold:,:]
+        M_reduced = np.conj(U_reduced).T @ (M @ np.conj(Vh_reduced).T)
+
+        U_prime, S_prime, Vh_prime = recursive_svd(M_reduced / threshold, threshold)
+
+        U[:,i_threshold:] = U[:,i_threshold:] @ U_prime
+        S[i_threshold:] = S_prime * threshold
+        Vh[i_threshold:,:] = Vh_prime @ Vh[i_threshold:,:]
+
+    return U, S, Vh
+
+def produce_a_random_mps2(L: int, chi_max: int, d: int = 2, _verbosity: int = VLevel.DEBUG):
+
+    def get_max_bond_dim(l: int):
+        '''
+            l counts the bonds starting from the left
+        '''
+        return min(chi_max, np.power(d, l) if l <= L/2 else np.power(d, L-l))
+
+    rho_l = np.array([1.0])
+    list_M = list()
+
+    for l in range(L):
+
+        left_chi_max = get_max_bond_dim(l)
+        right_chi_max = get_max_bond_dim(l+1)
+
+        vprint("Determining Vidal-representation of MPS tensor M@{}, dim(M_{}) = {} x {}".format(l, l, left_chi_max, right_chi_max), _verbosity, VLevel.INFO)
+
+        '''
+        We define Mfused as the stacked set of MPS-matrices at site l: Mfused = [M^{\sigma_1}, ..., M^{\sigma_d}]^t := Q*V
+        '''
+        if d*left_chi_max >= right_chi_max:
+            Q = random_unitary_matrix(d*left_chi_max)[:,:right_chi_max]
+        else:
+            Q = np.conj(random_unitary_matrix(right_chi_max)[:,:d*left_chi_max].T)
+
+        assert np.isclose(np.linalg.norm(np.eye(Q.shape[1]) - np.conj(Q.T)@Q), 0.0)
+
+        (col_dim, row_dim) = Q.shape
+        '''
+        Now Id = V^+ Q^+ D^2 Q V where D^2 is the diagonal matrix rho_l.
+        In order to find V we set M = (Q^+ rho_l Q), yielding R = M^{-1/2}
+        '''
+
+        A = np.conj(Q.T) @ np.kron(np.eye(d), np.diag(rho_l)) @ Q
+
+        vprint("Inverting A = Q^+ rho_l Q, dim(A) = {} x {}".format(*A.shape), _verbosity, VLevel.DEBUG)
+        U, S, Vh = recursive_svd(A, 1e-14)
+        V = np.conj(Vh.T) @ np.diag(np.sqrt(1.0 / S)) @ np.conj(U.T)
+        Mfused = Q @ V
+
+        # Get next eigenvalue distribution
+        rho_l = np.abs(random_eigenvalues_from_n_sphere(right_chi_max))
+
+        # now decompose Mfused to geht actual site tensors
+        M_l = np.zeros([d, left_chi_max, right_chi_max], dtype =complex)
+
+        for idx in range(d):
+            M_l[idx, :, :] = Mfused[idx*left_chi_max:(idx+1)*left_chi_max,:] @ np.reshape(np.diag(np.sqrt(rho_l)), [len(rho_l), len(rho_l)])
+            vprint("M_{}@site {}\n{}".format(idx, l, M_l[idx, :, :]), _verbosity, VLevel.DEBUG)
+
+        list_M.append(np.copy(M_l))
+
+    return list_M
 
 
 def vector_state_from_mps(list_M: list, L:int, d=2)->np.array:
