@@ -14,7 +14,7 @@ angles_center = generate_angle_maximally_entangled_eigenvalues(n)
 
 
 ##################### Plot of one sd #####################
-# standard_deviation = 0.9
+# standard_deviation = 0.3
        
 
 # for sim in range(n_simulations):
@@ -42,7 +42,7 @@ angles_center = generate_angle_maximally_entangled_eigenvalues(n)
 # plt.xlabel("Index i")
 # plt.ylabel(r"$\langle \lambda_i \rangle$")
 # plt.yscale("log")  # Set logarithmic scale for lambda values
-# plt.title(f"Average values of the sorted eigenvalues: Gaussian distribution with {standard_deviation}", fontsize=13)
+# plt.title(r"Average values of the sorted eigenvalues: Gaussian distribution with $\sigma=0.3$", fontsize=13)
 # plt.legend()
 # plt.grid()
 
@@ -146,13 +146,13 @@ plt.title("Slope $a$ vs. Standard Deviation (colored by $R^2$)")
 plt.grid(True)
 
 # Add annotation under plot
-plt.figtext(0.5, -0.05,
-            f"Minimum $R^2$ = {worst_r2:.4f} at diameter_disk = {worst_diameter:.4f}",
-            wrap=True, horizontalalignment='center', fontsize=10)
+# plt.figtext(0.5, -0.05,
+#             f"Minimum $R^2$ = {worst_r2:.4f} for the standard deviation = {worst_diameter:.4f}",
+#             wrap=True, horizontalalignment='center', fontsize=10)
 
 plt.tight_layout()
 plt.savefig(f"sebastian_plot_more_precised_n{n}_sigmalimit_{sigma_limit}_withtrucationchanging_corrected.png", bbox_inches='tight')
 plt.show()
-
+print("Minimum $R^2$ = {worst_r2} for the standard deviation = {worst_diameter}")
 
 
