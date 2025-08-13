@@ -320,7 +320,23 @@ def produce_random_mps(L: int, chi_max: int, d: int = 2, _verbosity: int = VLeve
         '''
         return min(chi_max, np.power(d, l) if l <= L/2 else np.power(d, L-l))
 
-    rho_l = np.array([1.0])
+    def solve_inversion(_D, _Q):
+
+        threshold = 1.e-15
+        A = np.conj(Q.T) @ np.kron(np.eye(d), np.diag(_D)) @ Q
+
+        vprint("Solving inverse square root of A = Q^+ S^2 Q, dim(A) = {} x {}".format(*A.shape), _verbosity, VLevel.DEBUG)
+        U, S, Vh = recursive_svd(A, threshold, _verbosity = _verbosity)
+
+        assert np.all(np.isclose(S.imag, 0.0)), "non-vanishing imaginary part in singular values detected, violated condition is np.isclose(S.imag, 0.0) = {}".format(np.isclose(S.imag, 0.0))
+
+        Snorm = np.sum(S**2)
+        S[S < threshold] = 0.0
+        S *= Snorm / np.sum(S**2)
+        Sinv = np.array([1.0 / np.sqrt(s) if s > 0.0 else 0.0 for s in list(S)])
+        return np.conj(Vh.T) @ np.diag(Sinv) @ np.conj(U.T)
+
+    prev_S = np.array([1.0])
     list_M = list()
     list_rho = list()
 
@@ -343,29 +359,31 @@ def produce_random_mps(L: int, chi_max: int, d: int = 2, _verbosity: int = VLeve
 
         (col_dim, row_dim) = Q.shape
         '''
-        Now Id = V^+ Q^+ D^2 Q V where D^2 is the diagonal matrix rho_l.
-        In order to find V we set M = (Q^+ rho_l Q), yielding R = M^{-1/2}
+        Now Id = V^+ Q^+ S^2 Q V where S^2 is the d-block-diagonal matrix with rho_l on its blocks
+        In order to find V we set A = Q^+ S^2 Q, yielding V = A^{-1/2}
         '''
-
-        A = np.conj(Q.T) @ np.kron(np.eye(d), np.diag(rho_l)) @ Q
-
-        vprint("Inverting A = Q^+ rho_l Q, dim(A) = {} x {}".format(*A.shape), _verbosity, VLevel.DEBUG)
-        U, S, Vh = recursive_svd(A, 1e-14, _verbosity = _verbosity)
-        V = np.conj(Vh.T) @ np.diag(np.sqrt(1.0 / S)) @ np.conj(U.T)
+        V = solve_inversion(prev_S**2, Q)
         Mfused = Q @ V
 
-        # Get next eigenvalue distribution
-        rho_l = np.abs(random_eigenvalues_from_n_sphere(right_chi_max))
-        list_rho.append(rho_l)
+        # Get next Schmidt-value distribution
+        # next_S = np.ones(right_chi_max) / np.sqrt(right_chi_max) #random_eigenvalues_from_n_sphere(right_chi_max)
+        next_S = random_eigenvalues_from_n_sphere(right_chi_max)
+
+        rho = next_S**2
+        assert np.isclose(np.sum(rho), 1.0), "Normalization constraint violated for Schmidt value distribution, |np.sum(S**2)| = {}".format(np.sum(rho))
+
+        list_rho.append(rho)
 
         # now decompose Mfused to geht actual site tensors
         M_l = np.zeros([d, left_chi_max, right_chi_max], dtype =complex)
 
+        S_matrix = np.reshape(np.diag(next_S), [len(next_S), len(next_S)])
         for idx in range(d):
-            M_l[idx, :, :] = Mfused[idx*left_chi_max:(idx+1)*left_chi_max,:] @ np.reshape(np.diag(np.sqrt(rho_l)), [len(rho_l), len(rho_l)])
+            M_l[idx, :, :] = Mfused[idx*left_chi_max:(idx+1)*left_chi_max,:] @ S_matrix
             vprint("M_{}@site {}\n{}".format(idx, l, M_l[idx, :, :]), _verbosity, VLevel.DEBUG)
 
         list_M.append(np.copy(M_l))
+        prev_S = next_S
 
     return list_M, list_rho
 
