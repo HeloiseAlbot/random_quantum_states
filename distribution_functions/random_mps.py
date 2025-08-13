@@ -3,9 +3,19 @@ import math
 
 from scipy.optimize import root
 from scipy.optimize import minimize
-from scipy.linalg import block_diag, eigh
+from scipy.linalg import block_diag, eigh, svd
 from scipy.stats import unitary_group, norm, truncnorm
 from itertools import product
+from enum import Enum
+
+class VLevel(Enum):
+    QUIET = 0
+    INFO = 1
+    DEBUG = 2
+
+def vprint(_msg: str, _verbosity: VLevel = VLevel.QUIET, _min_verbosity: VLevel = VLevel.QUIET):
+    if (_verbosity.value > VLevel.QUIET.value) and (_verbosity.value >= _min_verbosity.value):
+        print(_msg, flush = True)
 
 # Generate random state defined by the level of entanglement between the lattice sites
 def random_unitary_matrix(n):
@@ -267,6 +277,115 @@ def produce_a_random_mps(L=int, d=2):
         rho_l = rho_l_minus_one
 
     return list_M, list_objective_error, list_left_normalization_error, rho_middle
+
+def recursive_svd(M, threshold, _verbosity: int = VLevel.INFO, lapack_driver = 'gesvd'):
+
+    U, S, Vh = svd(M, lapack_driver = lapack_driver)
+
+    # First sort singular values to ensure decreasing singular values
+    sort_idxs = np.argsort(S)[::-1]
+    U = U[:, sort_idxs]
+    S = S[sort_idxs]
+    Vh = Vh[sort_idxs,:]
+
+    # Now look for threshold singular value
+    i_threshold = len(S)
+    for idx in range(i_threshold):
+        if S[idx]/S[0] < threshold:
+            i_threshold = idx
+            break
+
+    # If there are singular valus below threshold, recursively call svd for this subspace
+    if i_threshold < len(S):
+
+        vprint("In recursive svd, entering sublayer at idx {} of {} singular values".format(i_threshold, len(S)), _verbosity, VLevel.DEBUG)
+
+        U_reduced = U[:,i_threshold:]
+        Vh_reduced = Vh[i_threshold:,:]
+        M_reduced = np.conj(U_reduced).T @ (M @ np.conj(Vh_reduced).T)
+
+        U_prime, S_prime, Vh_prime = recursive_svd(M_reduced / threshold, threshold)
+
+        U[:,i_threshold:] = U[:,i_threshold:] @ U_prime
+        S[i_threshold:] = S_prime * threshold
+        Vh[i_threshold:,:] = Vh_prime @ Vh[i_threshold:,:]
+
+    return U, S, Vh
+
+def produce_random_mps(L: int, chi_max: int, d: int = 2, _verbosity: int = VLevel.INFO):
+
+    def get_max_bond_dim(l: int):
+        '''
+            l counts the bonds starting from the left
+        '''
+        return min(chi_max, np.power(d, l) if l <= L/2 else np.power(d, L-l))
+
+    def solve_inversion(_D, _Q):
+
+        threshold = 1.e-15
+        A = np.conj(Q.T) @ np.kron(np.eye(d), np.diag(_D)) @ Q
+
+        vprint("Solving inverse square root of A = Q^+ S^2 Q, dim(A) = {} x {}".format(*A.shape), _verbosity, VLevel.DEBUG)
+        U, S, Vh = recursive_svd(A, threshold, _verbosity = _verbosity)
+
+        assert np.all(np.isclose(S.imag, 0.0)), "non-vanishing imaginary part in singular values detected, violated condition is np.isclose(S.imag, 0.0) = {}".format(np.isclose(S.imag, 0.0))
+
+        Snorm = np.sum(S**2)
+        S[S < threshold] = 0.0
+        S *= Snorm / np.sum(S**2)
+        Sinv = np.array([1.0 / np.sqrt(s) if s > 0.0 else 0.0 for s in list(S)])
+        return np.conj(Vh.T) @ np.diag(Sinv) @ np.conj(U.T)
+
+    prev_S = np.array([1.0])
+    list_M = list()
+    list_rho = list()
+
+    for l in range(L):
+
+        left_chi_max = get_max_bond_dim(l)
+        right_chi_max = get_max_bond_dim(l+1)
+
+        vprint("Determining Vidal-representation of MPS tensor M@{}, dim(M_{}) = {} x {}".format(l, l, left_chi_max, right_chi_max), _verbosity, VLevel.INFO)
+
+        '''
+        We define Mfused as the stacked set of MPS-matrices at site l: Mfused = [M^{\sigma_1}, ..., M^{\sigma_d}]^t := Q*V
+        '''
+        if d*left_chi_max >= right_chi_max:
+            Q = random_unitary_matrix(d*left_chi_max)[:,:right_chi_max]
+        else:
+            Q = np.conj(random_unitary_matrix(right_chi_max)[:,:d*left_chi_max].T)
+
+        assert np.isclose(np.linalg.norm(np.eye(Q.shape[1]) - np.conj(Q.T)@Q), 0.0)
+
+        (col_dim, row_dim) = Q.shape
+        '''
+        Now Id = V^+ Q^+ S^2 Q V where S^2 is the d-block-diagonal matrix with rho_l on its blocks
+        In order to find V we set A = Q^+ S^2 Q, yielding V = A^{-1/2}
+        '''
+        V = solve_inversion(prev_S**2, Q)
+        Mfused = Q @ V
+
+        # Get next Schmidt-value distribution
+        # next_S = np.ones(right_chi_max) / np.sqrt(right_chi_max) #random_eigenvalues_from_n_sphere(right_chi_max)
+        next_S = random_eigenvalues_from_n_sphere(right_chi_max)
+
+        rho = next_S**2
+        assert np.isclose(np.sum(rho), 1.0), "Normalization constraint violated for Schmidt value distribution, |np.sum(S**2)| = {}".format(np.sum(rho))
+
+        list_rho.append(rho)
+
+        # now decompose Mfused to geht actual site tensors
+        M_l = np.zeros([d, left_chi_max, right_chi_max], dtype =complex)
+
+        S_matrix = np.reshape(np.diag(next_S), [len(next_S), len(next_S)])
+        for idx in range(d):
+            M_l[idx, :, :] = Mfused[idx*left_chi_max:(idx+1)*left_chi_max,:] @ S_matrix
+            vprint("M_{}@site {}\n{}".format(idx, l, M_l[idx, :, :]), _verbosity, VLevel.DEBUG)
+
+        list_M.append(np.copy(M_l))
+        prev_S = next_S
+
+    return list_M, list_rho
 
 
 def vector_state_from_mps(list_M: list, L:int, d=2)->np.array:
