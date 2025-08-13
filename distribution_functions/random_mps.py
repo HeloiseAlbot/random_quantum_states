@@ -320,22 +320,29 @@ def produce_random_mps(L: int, chi_max: int, d: int = 2, _verbosity: int = VLeve
         '''
         return min(chi_max, np.power(d, l) if l <= L/2 else np.power(d, L-l))
 
-    def solve_inversion(_D, _Q):
+    def truncate(_S, _threshold):
 
-        threshold = 1.e-15
+        S = np.copy(_S)
+        Snorm = np.sum(S**2)
+        S[S < _threshold] = 0.0
+
+        return S * Snorm / np.sum(S**2)
+
+    def solve_inversion(_D, _Q, _threshold):
+
         A = np.conj(Q.T) @ np.kron(np.eye(d), np.diag(_D)) @ Q
 
         vprint("Solving inverse square root of A = Q^+ S^2 Q, dim(A) = {} x {}".format(*A.shape), _verbosity, VLevel.DEBUG)
-        U, S, Vh = recursive_svd(A, threshold, _verbosity = _verbosity)
+        U, S, Vh = recursive_svd(A, 1e-14, _verbosity = _verbosity)
 
         assert np.all(np.isclose(S.imag, 0.0)), "non-vanishing imaginary part in singular values detected, violated condition is np.isclose(S.imag, 0.0) = {}".format(np.isclose(S.imag, 0.0))
 
-        Snorm = np.sum(S**2)
-        S[S < threshold] = 0.0
-        S *= Snorm / np.sum(S**2)
-        Sinv = np.array([1.0 / np.sqrt(s) if s > 0.0 else 0.0 for s in list(S)])
+        S = truncate(S, _threshold)
+        Sinv = np.array([1.0 / np.sqrt(s) if s > 0.0 else 0.0 for s in S])
         return np.conj(Vh.T) @ np.diag(Sinv) @ np.conj(U.T)
 
+
+    threshold = 1.e-16
     prev_S = np.array([1.0])
     list_M = list()
     list_rho = list()
@@ -362,12 +369,12 @@ def produce_random_mps(L: int, chi_max: int, d: int = 2, _verbosity: int = VLeve
         Now Id = V^+ Q^+ S^2 Q V where S^2 is the d-block-diagonal matrix with rho_l on its blocks
         In order to find V we set A = Q^+ S^2 Q, yielding V = A^{-1/2}
         '''
-        V = solve_inversion(prev_S**2, Q)
+        V = solve_inversion(prev_S**2, Q, threshold)
         Mfused = Q @ V
 
         # Get next Schmidt-value distribution
         # next_S = np.ones(right_chi_max) / np.sqrt(right_chi_max) #random_eigenvalues_from_n_sphere(right_chi_max)
-        next_S = random_eigenvalues_from_n_sphere(right_chi_max)
+        next_S = truncate(np.abs(random_eigenvalues_from_n_sphere(right_chi_max)), threshold)
 
         rho = next_S**2
         assert np.isclose(np.sum(rho), 1.0), "Normalization constraint violated for Schmidt value distribution, |np.sum(S**2)| = {}".format(np.sum(rho))
