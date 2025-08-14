@@ -1,5 +1,5 @@
 import numpy as np
-from random_mps import (produce_a_random_mps, produce_a_random_mps_eigenvalues_in_a_disk)
+from random_mps import (produce_random_mps, produce_random_mps_eigenvalues_in_a_disk)
 import os 
 
 """
@@ -59,30 +59,15 @@ def compute_C_zz2(list_A, i, j):
 
     return C
 
-def generate_random_MPS_eigenvalues_in_a_disk(L, d, standard_derivation):
-    """
-    Generate a random MPS with physical dimension d and L sites.
-    Returns a list of tensors with shape (2, D_left, D_right)
-    """
-    list_M, _, _, _ = produce_a_random_mps_eigenvalues_in_a_disk(L, d, standard_derivation)
-    return list_M
 
-def generate_random_MPS(L, d=2):
-    """
-    Generate a random MPS with physical dimension d and L sites.
-    Returns a list of tensors with shape (2, D_left, D_right)
-    """
-    list_M, _, _, _ = produce_a_random_mps(L, d)
-    return list_M
-
-def average_correlation_matrix2(L, d, num_samples, standard_derivation=None):
+def average_correlation_matrix2(L: int, chi_max:int, d: int=2, num_samples: int=1, diameter_disk=None):
     """
     Compute averaged C^{zz}(i,j) matrix for all pairs (i, j)
     """
     corr_matrix = np.zeros((L, L))
-    if standard_derivation is None:
-        for _ in range(num_samples):
-            list_M = generate_random_MPS(L, d) 
+    if diameter_disk is None:
+        for _sample in range(num_samples):
+            list_M, _ = produce_random_mps(L, chi_max, d)
             for i in range(L):
                 for j in range(i + 1, L):
                     c = compute_C_zz2(list_M, i, j).real
@@ -91,8 +76,8 @@ def average_correlation_matrix2(L, d, num_samples, standard_derivation=None):
         corr_matrix /= num_samples
         return corr_matrix
     else:
-        for _ in range(num_samples):
-            list_M = generate_random_MPS_eigenvalues_in_a_disk(L, d, standard_derivation)
+        for _sample in range(num_samples):
+            list_M, _ = produce_random_mps_eigenvalues_in_a_disk(L, chi_max, diameter_disk, d)
             for i in range(L):
                 for j in range(i + 1, L):
                     c = compute_C_zz2(list_M, i, j).real
