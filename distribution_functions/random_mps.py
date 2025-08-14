@@ -4,7 +4,7 @@ import math
 from scipy.optimize import root
 from scipy.optimize import minimize
 from scipy.linalg import block_diag, eigh, svd
-from scipy.stats import unitary_group, norm, truncnorm
+from scipy.stats import unitary_group, norm
 from itertools import product
 from enum import Enum
 
@@ -478,10 +478,19 @@ def random_eigenvalues_from_n_sphere(n: int, r=1)-> np.array:
         return coordinates
         # return np.sort(np.square(coordinates))[::-1]
 
-def random_state_vector_from_mps(L, d=2)-> np.array:
-    list_M, list_objective_error, list_left_normalization_error, _ = produce_a_random_mps(L, d)
+def random_state_vector_from_mps(L: int, chi_max: int, d: int = 2)-> np.array:
+    """
+    Input:
+    L: number of lattice sites
+    chi_max: bond dimension?
+    d: dimension of the local space
+
+    Return:
+    state: an array of the probability amplitude of a random state in the computational basis.
+    """
+    list_M, _ = produce_random_mps(L, chi_max, d)
     state = vector_state_from_mps(list_M, L, d)
-    return state, list_objective_error, list_left_normalization_error
+    return state
 
 def product_state_eigenvalues(n: int) ->np.array:
     eigenvalues = np.zeros(n)
@@ -654,14 +663,7 @@ def gaussian_point_on_the_n_sphere_in_a_disk(n: int, standard_deviation: float, 
         print("Angles center is None")
         angles_center = generate_angle_maximally_entangled_eigenvalues(n)
     # Step 1: Generate the random angles
-    delta_angles = np.zeros(n-1)
-    for i in range(1, n):
-        limit_orthant_plus =  np.arcsin(1 / np.sqrt(n-i+1))
-        limit_orthant_minus =  np.arccos(1 / np.sqrt(n-i+1))
-        lower, upper = -limit_orthant_minus, limit_orthant_plus
-        # Compute truncation bounds in standard normal units
-        a_, b_ = (lower ) / standard_deviation, (upper) / standard_deviation
-        delta_angles[i-1] = truncnorm.rvs(a_, b_, loc=0, scale=standard_deviation, size=1)# Δφ1, Δφ2, ..., Δφ_{n-1} in Gaussian around 0 
+    delta_angles =  np.random.normal(0, standard_deviation, n-1)    
     # Step 2: Compute x1, x2, ..., xn
     new_angles = angles_center + delta_angles
     new_coordinates = np.zeros(n)
