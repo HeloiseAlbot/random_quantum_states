@@ -33,251 +33,7 @@ def random_unitary_matrix(n):
     d = np.diag(R)
     Q = Q * (d / np.abs(d)) 
     return Q 
-
-def reshape_array_before_middle(A, d, l):
-    """
-    Reshape A of dimension (d^l, d^l) into B of dimension (d, d^(l-1), d^l)
-    """
-    d_l = int(d ** l)
-    d_l_minus_1 = int(d ** (l - 1))
-    # Initialize B with the desired shape
-    B = np.zeros((d, d_l_minus_1, d_l), dtype=A.dtype)
-    # Fill B by taking slices from A
-    for i in range(d):
-        B[i, :, :] = A[i * d_l_minus_1: (i + 1) * d_l_minus_1, :]
-    return B
-
-def reshape_array_after_middle(A, d, l):
-    """
-    Reshape A of dimension (d^dimension, d^dimension) into B of dimension (d, d^(L-l+1), d^(L-l))
-    dimension = d**(L-l+1)
-    """
-    dimension = A.shape[0] 
-    d_L_minus_l = int(dimension/d)
-    # Initialize B with the desired shape
-    B = np.zeros((d, dimension, d_L_minus_l), dtype=A.dtype)
-    # Fill B by taking slices from A
-    for i in range(d):
-        B[i, :, :] = A[:, i * d_L_minus_l: (i + 1) * d_L_minus_l]
-    return B
-
-
-def block_diagonal_from_rho(rho, d):
-    """
-    Create a block diagonal matrix with d blocks, each equal to the matrix rho.
-    
-    Parameters:
-    rho (np.ndarray): The matrix to repeat in the block diagonal.
-    d (int): The number of blocks. Here, it corresponds to the dimension of a single site, the dimension 
-    of a qudit, in the case of qubit d=2.
-    
-    Returns:
-    block_matrix (np.ndarray): The block diagonal matrix with d blocks of rho.
-    """
-    # Create a list of d copies of rho
-    block_list = [rho] * d
-    # Return the block diagonal matrix using scipy's block_diag
-    return block_diag(*block_list)
-
-
-def f_from_M_before_middle(M, rho_l, d, l):
-    """
-    M is of dimension (d^{n},d^{n})).
-    rho_l is of diemnsion (d^{n-1},d^{n-1}).
-    Should return a matrix of shape (d^n, d^n).
-    """
-    d_l = int(d**l)
-    M = M.reshape((d_l, d_l))
-    M_tensor = reshape_array_before_middle(M, d, l) 
-    sum_product = np.zeros((int(d**(l-1)), int(d**(l-1))), dtype=np.complex128)
-    for sigma in range(d):
-        M_sigma = M_tensor[sigma, :, :]
-        sum_product += M_sigma @ rho_l @ M_sigma.conj().T
-    return sum_product
-
-
-def loss_function_M_before_middle(M, rho_l, rho_l_minus_one, d, l):
-    """
-    Define the loss function to minimize |f(M) - rho_2|^2 (Frobenius norm)
-    """
-    fM = f_from_M_before_middle(M, rho_l, d, l)
-    return np.linalg.norm(fM - rho_l_minus_one, 'fro')**2
-
-def constraint_M_before_middle(M, d, l):
-    """
-    Constraint function: sum_sigma M[sigma,:,:].H @ M[sigma,:,:] = Identity
-    """
-    M = M.reshape(d**l, d**l)
-    d_l = int(d**l)
-
-    identity = np.eye(d_l, dtype=np.complex128)
-    M_tensor = reshape_array_before_middle(M, d, l)
-    sum_product = np.zeros((d_l, d_l), dtype=np.complex128)    
-    for sigma in range(d):
-        M_sigma = M_tensor[sigma, :, :]
-        sum_product += M_sigma.conj().T @ M_sigma
-    
-    return np.linalg.norm(sum_product - identity, 'fro')**2  # Should equal 0 for valid M
-
-def constraint_M_after_middle(M, d, l, L):
-    """
-    Constraint function: sum_sigma M[sigma,:,:].H @ M[sigma,:,:] = Identity
-    """
-    d_L_minus_l_plus_1 = d**(L-l+1)
-    d_L_minus_l = int(d**(L-l))
-    M = M.reshape(d_L_minus_l_plus_1, d_L_minus_l_plus_1)
-
-    identity = np.eye(d_L_minus_l)
-    M_tensor = reshape_array_after_middle(M, d, l)
-    sum_product = np.zeros((d_L_minus_l, d_L_minus_l), dtype=np.complex128)
-    for sigma in range(d):
-        M_sigma = M_tensor[sigma, :, :]
-        sum_product += M_sigma.conj().T @ M_sigma
-    return np.linalg.norm(sum_product - identity, 'fro')**2  # Should equal 0 for valid M
-
-def f_from_M_after_middle(M, rho_l, d, l, L):
-    """
-    M is of dimension (d^{n},d^{n})).
-    rho_l is of dimension (d^{n-1},d^{n-1}).
-    Should return a matrix of shape (d^n, d^n).
-    """
-    dimension = d**(L-l+1)
-    M = M.reshape(dimension, dimension)
-    R = block_diagonal_from_rho(rho_l, d)
-    return M @ R @ np.conj(M.T)
-
-def loss_function_M_after_middle(M, rho_l, rho_l_minus_one, d, l, L):
-    fM = f_from_M_after_middle(M, rho_l, d, l, L)
-    return np.linalg.norm(fM - rho_l_minus_one, 'fro')**2
-
-def check_objective_before_middle(M, rho_l, rho_l_minus_one, d, l):
-    fM = f_from_M_before_middle(M, rho_l, d, l)
-    return np.linalg.norm(fM - rho_l_minus_one, 'fro')**2
-
-def check_objective_after_middle(M, rho_l, rho_l_minus_one, d, l, L):
-    """
-    We check the Frobenius norm of the objective function: rho_l_minus_one = M @ R @ np.conj(M.T)
-    """
-    fM = f_from_M_after_middle(M, rho_l, d, l, L)
-    return np.linalg.norm(fM - rho_l_minus_one, 'fro')**2
-
-
-def check_left_normalization_after_middle(M, d, l, L):
-    """
-    We check the Frobenius norm of the constraint function: sum_sigma M[sigma,:,:].H @ M[sigma,:,:] = Identity
-    """
-    dimension = d**(L-l+1)
-    identity = np.eye(int(dimension/d))
-    M_tensor = reshape_array_after_middle(M, d, l)
-    sum_product = np.zeros((int(dimension/d), int(dimension/d)), dtype=np.complex128)
-    
-    for sigma in range(d):
-        M_sigma = M_tensor[sigma, :, :]
-        sum_product += M_sigma.conj().T @ M_sigma
-    return np.linalg.norm(sum_product - identity, 'fro')**2  # Should equal 0 for valid M
-
-
-def check_left_normalization_before_middle(M, d, l):
-    """
-    We check the Frobenius norm of the constraint function: sum_sigma M[sigma,:,:].H @ M[sigma,:,:] = Identity
-    It is for before the middle of the chain. 
-    """
-    d_l = int(d**l)
-    M = M.reshape(d_l, d_l)
-    d_l = int(d**l)
-
-    identity = np.eye(d_l)
-    M_tensor = reshape_array_before_middle(M, d, l)
-    sum_product = np.zeros((d_l, d_l), dtype=np.complex128)    
-    for sigma in range(d):
-        M_sigma = M_tensor[sigma, :, :]
-        sum_product += M_sigma.conj().T @ M_sigma
-    
-    return np.linalg.norm(sum_product - identity, 'fro')**2  # Should equal 0 for valid M
-
-
-def produce_a_random_mps(L=int, d=2):
-    """
-    Input:
-    L (int): number of site (assumed even for simplicity for the moment).
-    d (int): dimension of the hilbert space of a single site (for qubit d=2).
-    
-    Output:
-    list_M (list): list of the tensors M_optimized ordered increasingly. 
-    list_objective_error
-    list_left_normalization_error
-    rho_middle
-    
-    The function constructs in the decreasing order, the matrix M to produce a random product state. 
-    """
-    rho_l = np.array([[1]]) # Initial density matrix rho_L.
-    list_M = [] # I store the matrices M in a list. 
-    list_objective_error = []
-    list_left_normalization_error = []
-    
-    for l in range(L, int(L/2), -1): # l> L/2
-        d_L_minus_l_plus_1 = int(d**(L-l+1))
-        
-        # Random unitary matrix (rho is a density matrix so Hermitian so diagonalizable by a unitary matrix).
-        Q = random_unitary_matrix(d_L_minus_l_plus_1) 
-        D = np.diag(random_eigenvalues_from_n_sphere(d_L_minus_l_plus_1)) 
-        # D = np.diag(Dirichlet_distribution(d_L_minus_l_plus_1, alpha=1))
-        # D = np.diag(squared_moduli_column_Haar_random_unitary(d_L_minus_l_plus_1))
-        rho_l_minus_one = Q @ D @ np.conj(Q).T
-        # rho_l_minus_one = D 
-
-        # Initialize M randomly 
-        M_initial = np.random.randn(d_L_minus_l_plus_1, d_L_minus_l_plus_1) + 1j * np.random.randn(d_L_minus_l_plus_1, d_L_minus_l_plus_1)
-        M_initial = M_initial.flatten()
-        # Constraints dictionary for scipy.optimize
-        constraints = {'type': 'eq', 'fun': constraint_M_after_middle, 'args': (d, l, L)}
-        # Optimize M to minimize the loss while satisfying the constraint
-        result = minimize(loss_function_M_after_middle, M_initial, args=(rho_l, rho_l_minus_one, d, l, L), 
-                          constraints=constraints, method='SLSQP', options={'disp': False})
-        # Put options={'disp': True} to have the information about the optimization. 
-        # Reshape the result back to the original shape
-        M_optimized = result.x.reshape(d_L_minus_l_plus_1, d_L_minus_l_plus_1)
-        list_M.insert(0, reshape_array_after_middle(M_optimized, d, l))
-        list_objective_error.insert(0,check_objective_after_middle(M_optimized, rho_l, rho_l_minus_one, d, l, L))
-        list_left_normalization_error.insert(0, check_left_normalization_after_middle(M_optimized, d, l, L))
-#         print(f"rho_{l}:{rho_l}")
-#         print(f"is_density_matrix(rho):{is_density_matrix(rho_l)}")
-        rho_l = rho_l_minus_one
-#         print(f"rho_{l-1}:{rho_l_minus_one}")
-    rho_middle = rho_l
-
-    for l in range(int(L/2), 0, -1): #l <= L/2
-#         print(f"l:{l}")
-        d_l = int(d**(l))
-        d_l_minus_one = int(d**(l-1))
-        # Random unitary matrix (rho is a density matrix so Hermitian so diagonalizable by a unitary matrix).
-        Q = random_unitary_matrix(d_l_minus_one) 
-        D = np.diag(random_eigenvalues_from_n_sphere(d_l_minus_one))  
-        # D = np.diag(Dirichlet_distribution(d_l_minus_one, alpha=1))
-        # D = np.diag(squared_moduli_column_Haar_random_unitary(d_l_minus_one))
-        # rho_l_minus_one = D
-        rho_l_minus_one = Q @ D @ np.conj(Q).T
-        
-        # Find M minimising our objective function with the left normalization constraint. 
-        M_initial = np.random.randn(d_l, d_l) + 1j * np.random.randn(d_l, d_l)
-        M_initial = M_initial.flatten()
-        # Constraints dictionary for scipy.optimize
-        constraints = {'type': 'eq', 'fun': constraint_M_before_middle, 'args': (d, l)}
-        # Optimize M to minimize the loss while satisfying the constraint
-        result = minimize(loss_function_M_before_middle, M_initial, args=(rho_l, rho_l_minus_one, d, l), 
-                          constraints=constraints, method='SLSQP', options={'disp': False})
-        # Reshape the result back to the original shape
-        M_optimized = result.x.reshape(d_l, d_l)
-        list_M.insert(0, reshape_array_before_middle(M_optimized, d, l))
-        list_objective_error.insert(0, check_objective_before_middle(M_optimized, rho_l, rho_l_minus_one, d, l))
-        list_left_normalization_error.insert(0, check_left_normalization_before_middle(M_optimized, d, l))
-        
-#         print(f"rho_{l}:{rho_l}")
-#         print(f"is_density_matrix(rho_{l}):{is_density_matrix(rho_l)}")
-        rho_l = rho_l_minus_one
-
-    return list_M, list_objective_error, list_left_normalization_error, rho_middle
-
+ 
 def recursive_svd(M, threshold, _verbosity: int = VLevel.INFO, lapack_driver = 'gesvd'):
 
     U, S, Vh = svd(M, lapack_driver = lapack_driver)
@@ -304,8 +60,8 @@ def recursive_svd(M, threshold, _verbosity: int = VLevel.INFO, lapack_driver = '
         Vh_reduced = Vh[i_threshold:,:]
         M_reduced = np.conj(U_reduced).T @ (M @ np.conj(Vh_reduced).T)
 
-        U_prime, S_prime, Vh_prime = recursive_svd(M_reduced / threshold, threshold)
-
+        U_prime, S_prime, Vh_prime = recursive_svd(M_reduced / threshold , threshold)
+        
         U[:,i_threshold:] = U[:,i_threshold:] @ U_prime
         S[i_threshold:] = S_prime * threshold
         Vh[i_threshold:,:] = Vh_prime @ Vh[i_threshold:,:]
@@ -362,6 +118,7 @@ def produce_random_mps(L: int, chi_max: int, d: int = 2, _verbosity: int = VLeve
         else:
             Q = np.conj(random_unitary_matrix(right_chi_max)[:,:d*left_chi_max].T)
 
+        # Check that the columns of Q are orthonormal.
         assert np.isclose(np.linalg.norm(np.eye(Q.shape[1]) - np.conj(Q.T)@Q), 0.0)
 
         (col_dim, row_dim) = Q.shape
@@ -488,7 +245,7 @@ def random_state_vector_from_mps(L: int, chi_max: int, d: int = 2)-> np.array:
     Return:
     state: an array of the probability amplitude of a random state in the computational basis.
     """
-    list_M, _ = produce_random_mps(L, chi_max, d)
+    list_M, _ = produce_random_mps(L, chi_max, d, _verbosity = VLevel.QUIET)
     state = vector_state_from_mps(list_M, L, d)
     return state
 
@@ -684,7 +441,7 @@ def produce_random_mps_eigenvalues_in_a_disk(L: int, chi_max: int, diameter_disk
     Input:
     L (int): number of site (assumed even for simplicity for the moment).
     d (int): dimension of the hilbert space of a single site (for qubit d=2).
-    chi_max: maximal baond dimension 
+    chi_max: maximal bond dimension 
 
     Output:
     list_M (list): list of the tensors M_optimized ordered increasingly. 
@@ -779,7 +536,7 @@ def produce_random_mps_eigenvalues_gaussian_in_a_disk(L: int, chi_max: int, stan
     Input:
     L (int): number of site (assumed even for simplicity for the moment).
     d (int): dimension of the hilbert space of a single site (for qubit d=2).
-    chi_max: maximal baond dimension 
+    chi_max: maximal bond dimension 
 
     Output:
     list_M (list): list of the tensors M_optimized ordered increasingly. 
