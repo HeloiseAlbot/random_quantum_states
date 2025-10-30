@@ -337,7 +337,7 @@ def produce_random_mps(L: int, chi_max: int, d: int = 2, _verbosity: int = VLeve
 
         assert np.all(np.isclose(S.imag, 0.0)), "non-vanishing imaginary part in singular values detected, violated condition is np.isclose(S.imag, 0.0) = {}".format(np.isclose(S.imag, 0.0))
 
-        S = truncate(S, _threshold, _keep_norm = True)
+        # S = truncate(S, _threshold, _keep_norm = True)
         Sinv = np.array([1.0 / np.sqrt(s) if s > 0.0 else 0.0 for s in S])
         return np.conj(Vh.T) @ np.diag(Sinv) @ np.conj(U.T)
 
