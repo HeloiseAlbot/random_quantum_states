@@ -69,6 +69,14 @@ def recursive_svd(M, threshold, _verbosity: int = VLevel.INFO, lapack_driver = '
     return U, S, Vh
 
 def produce_random_mps(L: int, chi_max: int, d: int = 2, _verbosity: int = VLevel.INFO):
+    """
+    Input:
+    L (int): the number of sites in the chain.
+    chi_max (int): the bond dimension of the MPS.
+    d (int): the dimension of the local Hilbert space.
+
+    Return:
+    """
 
     def get_max_bond_dim(l: int):
         '''
@@ -77,25 +85,36 @@ def produce_random_mps(L: int, chi_max: int, d: int = 2, _verbosity: int = VLeve
         return min(chi_max, np.power(d, l) if l <= L/2 else np.power(d, L-l))
 
     def truncate(_S, _threshold):
-
+        """
+        Return:
+        S: a copy of the matrix _S where the entries which are smaller than _threshold are set to 0. 
+        The "normalization of S" is correct (equal to d) for _S diagonal (S is then also diagonal). 
+        (Why this choice of normalization ? It fixes the sum of the square of the diag entries). 
+        """
         S = np.copy(_S)
-        Snorm = np.sum(S**2)
+        Snorm = np.sum(S**2) # Due to the normalisation  of rho (sum of the square of the eigenvalues =1), it is equal to d. No it isn't. 
         S[S < _threshold] = 0.0
-
+        
         return S * Snorm / np.sum(S**2)
 
     def solve_inversion(_D, _Q, _threshold):
+        """
+        Return:
+        A = Q^+ S^2 Q
 
-        A = np.conj(Q.T) @ np.kron(np.eye(d), np.diag(_D)) @ Q
+
+        """
+
+        A = np.conj(_Q.T) @ np.kron(np.eye(d), np.diag(_D)) @ _Q
 
         vprint("Solving inverse square root of A = Q^+ S^2 Q, dim(A) = {} x {}".format(*A.shape), _verbosity, VLevel.DEBUG)
-        U, S, Vh = recursive_svd(A, 1e-14, _verbosity = _verbosity)
+        U, Sigma, Vh = recursive_svd(A, 1e-14, _verbosity = _verbosity)
 
-        assert np.all(np.isclose(S.imag, 0.0)), "non-vanishing imaginary part in singular values detected, violated condition is np.isclose(S.imag, 0.0) = {}".format(np.isclose(S.imag, 0.0))
+        assert np.all(np.isclose(Sigma.imag, 0.0)), "non-vanishing imaginary part in singular values detected, violated condition is np.isclose(S.imag, 0.0) = {}".format(np.isclose(S.imag, 0.0))
 
-        S = truncate(S, _threshold)
-        Sinv = np.array([1.0 / np.sqrt(s) if s > 0.0 else 0.0 for s in S])
-        return np.conj(Vh.T) @ np.diag(Sinv) @ np.conj(U.T)
+        Sigma = truncate(Sigma, _threshold)
+        Sigma_sqr_inv = np.array([1.0 / np.sqrt(s) if s > 0.0 else 0.0 for s in Sigma])
+        return np.conj(Vh.T) @ np.diag(Sigma_sqr_inv) @ np.conj(U.T)
 
 
     threshold = 1.e-16
@@ -113,16 +132,15 @@ def produce_random_mps(L: int, chi_max: int, d: int = 2, _verbosity: int = VLeve
         '''
         We define Mfused as the stacked set of MPS-matrices at site l: Mfused = [M^{\sigma_1}, ..., M^{\sigma_d}]^t := Q*V
         '''
-        if d*left_chi_max >= right_chi_max:
+        if d*left_chi_max >= right_chi_max: # This condition is always fulfilled when the MPS is done from left to right.
             Q = random_unitary_matrix(d*left_chi_max)[:,:right_chi_max]
-        else:
+        else: # Called only when the MPS is done from right to left.
             Q = np.conj(random_unitary_matrix(right_chi_max)[:,:d*left_chi_max].T)
 
         # Check that the columns of Q are orthonormal.
         assert np.isclose(np.linalg.norm(np.eye(Q.shape[1]) - np.conj(Q.T)@Q), 0.0)
 
-        (col_dim, row_dim) = Q.shape
-        '''
+        ''' WRONG:
         Now Id = V^+ Q^+ S^2 Q V where S^2 is the d-block-diagonal matrix with rho_l on its blocks
         In order to find V we set A = Q^+ S^2 Q, yielding V = A^{-1/2}
         '''
@@ -138,14 +156,13 @@ def produce_random_mps(L: int, chi_max: int, d: int = 2, _verbosity: int = VLeve
 
         list_rho.append(rho)
 
-        # now decompose Mfused to geht actual site tensors
+        # now decompose Mfused to get actual site tensors
         M_l = np.zeros([d, left_chi_max, right_chi_max], dtype =complex)
 
         S_matrix = np.reshape(np.diag(next_S), [len(next_S), len(next_S)])
         for idx in range(d):
             M_l[idx, :, :] = Mfused[idx*left_chi_max:(idx+1)*left_chi_max,:] @ S_matrix
             vprint("M_{}@site {}\n{}".format(idx, l, M_l[idx, :, :]), _verbosity, VLevel.DEBUG)
-
         list_M.append(np.copy(M_l))
         prev_S = next_S
 

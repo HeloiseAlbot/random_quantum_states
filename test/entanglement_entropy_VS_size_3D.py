@@ -7,7 +7,7 @@ from distribution_functions.random_mps import (
 )
 
 d = 2
-l_max = 16
+l_max = 20
 l_values = np.arange(1, l_max)  # Subsystem sizes
 std_values = np.linspace(0.01, 1.0, 30)  # Standard deviation values
 n_samples = 20  # Number of samples to average
@@ -31,7 +31,7 @@ for i, l in enumerate(l_values):
             S_total += S_von_neumann(eigvals)
         Z[i, j] = S_total / n_samples
 
-np.savez(f"results_von_neumann_entropy_3D_surface_plot_average_over_{n_samples}_samples_until_{l_max-1}_gaussian_disk_loge.npz", entropy=Z, l_values=l_values, std_values=std_values)
+np.savez(f"results_von_neumann_entropy_3D_surface_plot_average_over_{n_samples}_samples_until_{l_max-1}_gaussian_disk_log.npz", entropy=Z, l_values=l_values, std_values=std_values)
 
 
 # Prepare meshgrid
@@ -50,6 +50,6 @@ ax.set_zlabel("Average Entropy $S$")
 ax.set_title(f"3D Plot of von Neumann Entropy (Avg over {n_samples} samples)")
 
 plt.tight_layout()
-plt.savefig(f"von_neumann_entropy_3D_surface_plot_average_over_{n_samples}_samples_until_{l_max-1}_gaussian_disk_truncationcorrected_loge.png", dpi=300, bbox_inches='tight')
+plt.savefig(f"von_neumann_entropy_3D_surface_plot_average_over_{n_samples}_samples_until_{l_max-1}_gaussian_disk_log.png", dpi=300, bbox_inches='tight')
 plt.show()
 
