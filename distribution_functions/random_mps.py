@@ -333,7 +333,7 @@ def produce_random_mps(L: int, chi_max: int, d: int = 2, _verbosity: int = VLeve
         A = np.conj(Q.T) @ np.kron(np.eye(d), np.diag(_D)) @ Q
 
         vprint("Solving inverse square root of A = Q^+ S^2 Q, dim(A) = {} x {}".format(*A.shape), _verbosity, VLevel.DEBUG)
-        U, S, Vh = recursive_svd(A, 1e-14, _verbosity = _verbosity)
+        U, S, Vh = recursive_svd(A, 1e-4, _verbosity = _verbosity)
 
         assert np.all(np.isclose(S.imag, 0.0)), "non-vanishing imaginary part in singular values detected, violated condition is np.isclose(S.imag, 0.0) = {}".format(np.isclose(S.imag, 0.0))
 
@@ -342,7 +342,7 @@ def produce_random_mps(L: int, chi_max: int, d: int = 2, _verbosity: int = VLeve
         return np.conj(Vh.T) @ np.diag(Sinv) @ np.conj(U.T)
 
 
-    threshold = 1.e-16
+    threshold = 1.e-32
     prev_S = np.array([1.0])
     list_M = list()
     list_rho = list()
