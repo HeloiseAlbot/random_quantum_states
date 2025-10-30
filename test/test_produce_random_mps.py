@@ -61,7 +61,7 @@ def check_mps_relation(list_M, list_Lambda, l, d):
     if diff_norm < 1e-10:
         print("Relation holds numerically.")
     else:
-        print("Relation deviates — likely due to random M not being canonical.")
+        print("Relation deviates.")
 
     return LHS, RHS, Lambda
 
