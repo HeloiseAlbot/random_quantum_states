@@ -1,6 +1,6 @@
 import numpy as np
 import scipy as sp
-from distribution_functions.random_mps_sp import produce_random_mps, VLevel
+from distribution_functions.random_mps import produce_random_mps, VLevel
 
 L = 32
 d = 2
