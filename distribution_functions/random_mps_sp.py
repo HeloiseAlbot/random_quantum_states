@@ -320,13 +320,13 @@ def produce_random_mps(L: int, chi_max: int, d: int = 2, _verbosity: int = VLeve
         '''
         return min(chi_max, np.power(d, l) if l <= L/2 else np.power(d, L-l))
 
-    def truncate(_S, _threshold, _normalized_input : bool = True):
+    def truncate(_S, _threshold, _keep_norm : bool = True):
 
         S = np.copy(_S)
         Snorm = np.sum(S**2)
         S[S < _threshold] = 0.0
 
-        return (S / np.sum(S**2)) if _normalized_input else (S * Snorm / np.sum(S**2))
+        return (S * np.sqrt( Snorm / np.sum(S**2))) if _keep_norm else (S / np.sqrt(np.sum(S**2)))
 
     def solve_inversion(_D, _Q, _threshold):
 
@@ -337,7 +337,7 @@ def produce_random_mps(L: int, chi_max: int, d: int = 2, _verbosity: int = VLeve
 
         assert np.all(np.isclose(S.imag, 0.0)), "non-vanishing imaginary part in singular values detected, violated condition is np.isclose(S.imag, 0.0) = {}".format(np.isclose(S.imag, 0.0))
 
-        S = truncate(S, _threshold, _normalized_input = False)
+        S = truncate(S, _threshold, _keep_norm = True)
         Sinv = np.array([1.0 / np.sqrt(s) if s > 0.0 else 0.0 for s in S])
         return np.conj(Vh.T) @ np.diag(Sinv) @ np.conj(U.T)
 
@@ -374,7 +374,7 @@ def produce_random_mps(L: int, chi_max: int, d: int = 2, _verbosity: int = VLeve
 
         # Get next Schmidt-value distribution
         # next_S = np.ones(right_chi_max) / np.sqrt(right_chi_max) #random_eigenvalues_from_n_sphere(right_chi_max)
-        next_S = truncate(np.abs(random_eigenvalues_from_n_sphere(right_chi_max)), threshold)
+        next_S = truncate(np.abs(random_eigenvalues_from_n_sphere(right_chi_max)), threshold, _keep_norm = False)
 
         rho = next_S**2
         assert np.isclose(np.sum(rho), 1.0), "Normalization constraint violated for Schmidt value distribution, |np.sum(S**2)| = {}".format(np.sum(rho))
