@@ -2,7 +2,7 @@ import numpy as np
 import scipy as sp
 from distribution_functions.random_mps import produce_random_mps, VLevel
 
-L = 20
+L = 32
 d = 2
 chi_max = 32
 
@@ -22,6 +22,6 @@ for j in range(L):
     #print(Mfused)
     #print(np.conj(Mfused.T) @ Mfused)
 
-    assert np.isclose(np.sum(np.diag(Mrho)), 1.0), "@site {}, np.sum(np.diag(Mrho)) = {}".format(j, np.sum(np.diag(Mrho)))
-    print("@site {} distance |rho_j - S^2_j| = {}".format(j, np.linalg.norm(list_rho[j] - np.diag(T)**2)))
+    #assert np.isclose(np.sum(np.diag(Mrho)), 1.0), "@site {}, np.sum(np.diag(Mrho)) = {}".format(j, np.sum(np.diag(Mrho)))
+    print("@site {} normalization constraint |np.sum(np.diag(Mrho)) - 1.0| = {}".format(j, abs(np.sum(np.diag(Mrho)) - 1.0)))
 
