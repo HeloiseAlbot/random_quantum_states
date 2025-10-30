@@ -4,7 +4,7 @@ import math
 from scipy.optimize import root
 from scipy.optimize import minimize
 from scipy.linalg import block_diag, eigh, svd
-from scipy.stats import unitary_group, norm, truncnorm
+from scipy.stats import unitary_group, norm
 from itertools import product
 from enum import Enum
 
@@ -478,10 +478,19 @@ def random_eigenvalues_from_n_sphere(n: int, r=1)-> np.array:
         return coordinates
         # return np.sort(np.square(coordinates))[::-1]
 
-def random_state_vector_from_mps(L, d=2)-> np.array:
-    list_M, list_objective_error, list_left_normalization_error, _ = produce_a_random_mps(L, d)
+def random_state_vector_from_mps(L: int, chi_max: int, d: int = 2)-> np.array:
+    """
+    Input:
+    L: number of lattice sites
+    chi_max: bond dimension?
+    d: dimension of the local space
+
+    Return:
+    state: an array of the probability amplitude of a random state in the computational basis.
+    """
+    list_M, _ = produce_random_mps(L, chi_max, d)
     state = vector_state_from_mps(list_M, L, d)
-    return state, list_objective_error, list_left_normalization_error
+    return state
 
 def product_state_eigenvalues(n: int) ->np.array:
     eigenvalues = np.zeros(n)
@@ -630,9 +639,7 @@ def gaussian_point_on_the_n_sphere_in_a_disk(n: int, standard_deviation: float, 
     Input:
     n (int): dimension of the space of the n-sphere. We should have angles_center.size = n-1. 
     standard_deviation (float): the standard deviation of the Gaussian distribution (in radian). 
-                    
-                    We place the simulation in the positive orthant. SO I NEED TO MODIFY THE CODE TO 
-                    IMPOSE THAT. 
+                    We DO NOT place the simulation in the positive orthant. 
                     Then, in order to keep a uniform distribution on the disk of the n-sphere we should have: 
                     epsilon_over_2 > math.asin(1/math.sqrt(n)), hence the ValueError line. 
     angles_center (np.array): coordinates of the point with is the center of the disk in which are taken 
@@ -654,14 +661,7 @@ def gaussian_point_on_the_n_sphere_in_a_disk(n: int, standard_deviation: float, 
         print("Angles center is None")
         angles_center = generate_angle_maximally_entangled_eigenvalues(n)
     # Step 1: Generate the random angles
-    delta_angles = np.zeros(n-1)
-    for i in range(1, n):
-        limit_orthant_plus =  np.arcsin(1 / np.sqrt(n-i+1))
-        limit_orthant_minus =  np.arccos(1 / np.sqrt(n-i+1))
-        lower, upper = -limit_orthant_minus, limit_orthant_plus
-        # Compute truncation bounds in standard normal units
-        a_, b_ = (lower ) / standard_deviation, (upper) / standard_deviation
-        delta_angles[i-1] = truncnorm.rvs(a_, b_, loc=0, scale=standard_deviation, size=1)# Δφ1, Δφ2, ..., Δφ_{n-1} in Gaussian around 0 
+    delta_angles =  np.random.normal(0, standard_deviation, n-1)    
     # Step 2: Compute x1, x2, ..., xn
     new_angles = angles_center + delta_angles
     new_coordinates = np.zeros(n)
@@ -679,9 +679,201 @@ def gaussian_point_on_the_n_sphere_in_a_disk(n: int, standard_deviation: float, 
 
 
 
+def produce_random_mps_eigenvalues_in_a_disk(L: int, chi_max: int, diameter_disk: float = 0.01, d: int = 2, _verbosity: int = VLevel.INFO):
+    """
+    Input:
+    L (int): number of site (assumed even for simplicity for the moment).
+    d (int): dimension of the hilbert space of a single site (for qubit d=2).
+    chi_max: maximal baond dimension 
+
+    Output:
+    list_M (list): list of the tensors M_optimized ordered increasingly. 
+    rho_middle
+    
+    The function constructs in the ascending order, the matrices M to produce a random product state. 
+    """
+
+    def get_max_bond_dim(l: int):
+        '''
+            l counts the bonds starting from the left
+        '''
+        return min(chi_max, np.power(d, l) if l <= L/2 else np.power(d, L-l))
+
+    def truncate(_S, _threshold):
+
+        S = np.copy(_S)
+        Snorm = np.sum(S**2)
+        S[S < _threshold] = 0.0
+
+        return S * Snorm / np.sum(S**2)
+
+    def solve_inversion(_D, _Q, _threshold):
+
+        A = np.conj(Q.T) @ np.kron(np.eye(d), np.diag(_D)) @ Q
+
+        vprint("Solving inverse square root of A = Q^+ S^2 Q, dim(A) = {} x {}".format(*A.shape), _verbosity, VLevel.DEBUG)
+        U, S, Vh = recursive_svd(A, 1e-14, _verbosity = _verbosity)
+
+        assert np.all(np.isclose(S.imag, 0.0)), "non-vanishing imaginary part in singular values detected, violated condition is np.isclose(S.imag, 0.0) = {}".format(np.isclose(S.imag, 0.0))
+
+        S = truncate(S, _threshold)
+        Sinv = np.array([1.0 / np.sqrt(s) if s > 0.0 else 0.0 for s in S])
+        return np.conj(Vh.T) @ np.diag(Sinv) @ np.conj(U.T)
 
 
-def produce_a_random_mps_eigenvalues_in_a_disk(L, d=2, diameter_disk = 0.01):
+    threshold = 1.e-16
+    prev_S = np.array([1.0])
+    list_M = list()
+    list_rho = list()
+
+    for l in range(L):
+
+        left_chi_max = get_max_bond_dim(l)
+        right_chi_max = get_max_bond_dim(l+1)
+
+        vprint("Determining Vidal-representation of MPS tensor M@{}, dim(M_{}) = {} x {}".format(l, l, left_chi_max, right_chi_max), _verbosity, VLevel.INFO)
+
+        '''
+        We define Mfused as the stacked set of MPS-matrices at site l: Mfused = [M^{\sigma_1}, ..., M^{\sigma_d}]^t := Q*V
+        '''
+        if d*left_chi_max >= right_chi_max:
+            Q = random_unitary_matrix(d*left_chi_max)[:,:right_chi_max]
+        else:
+            Q = np.conj(random_unitary_matrix(right_chi_max)[:,:d*left_chi_max].T)
+
+        assert np.isclose(np.linalg.norm(np.eye(Q.shape[1]) - np.conj(Q.T)@Q), 0.0)
+
+        (col_dim, row_dim) = Q.shape
+        '''
+        Now Id = V^+ Q^+ S^2 Q V where S^2 is the d-block-diagonal matrix with rho_l on its blocks
+        In order to find V we set A = Q^+ S^2 Q, yielding V = A^{-1/2}
+        '''
+        V = solve_inversion(prev_S**2, Q, threshold)
+        Mfused = Q @ V
+
+        # Get next Schmidt-value distribution
+        angles_center_l = generate_angle_maximally_entangled_eigenvalues(right_chi_max)
+        next_S = truncate(np.abs(random_point_on_the_n_sphere_in_a_disk(right_chi_max, diameter_disk, angles_center_l)), threshold)
+
+        rho = next_S**2
+        assert np.isclose(np.sum(rho), 1.0), "Normalization constraint violated for Schmidt value distribution, |np.sum(S**2)| = {}".format(np.sum(rho))
+
+        list_rho.append(rho)
+
+        # now decompose Mfused to geht actual site tensors
+        M_l = np.zeros([d, left_chi_max, right_chi_max], dtype =complex)
+
+        S_matrix = np.reshape(np.diag(next_S), [len(next_S), len(next_S)])
+        for idx in range(d):
+            M_l[idx, :, :] = Mfused[idx*left_chi_max:(idx+1)*left_chi_max,:] @ S_matrix
+            vprint("M_{}@site {}\n{}".format(idx, l, M_l[idx, :, :]), _verbosity, VLevel.DEBUG)
+
+        list_M.append(np.copy(M_l))
+        prev_S = next_S
+
+    return list_M, list_rho
+
+
+def produce_random_mps_eigenvalues_gaussian_in_a_disk(L: int, chi_max: int, standard_deviation: float = 0.01, d: int = 2, _verbosity: int = VLevel.INFO):
+    """
+    Input:
+    L (int): number of site (assumed even for simplicity for the moment).
+    d (int): dimension of the hilbert space of a single site (for qubit d=2).
+    chi_max: maximal baond dimension 
+
+    Output:
+    list_M (list): list of the tensors M_optimized ordered increasingly. 
+    rho_middle
+    
+    The function constructs in the ascending order, the matrices M to produce a random product state. 
+    """
+
+    def get_max_bond_dim(l: int):
+        '''
+            l counts the bonds starting from the left
+        '''
+        return min(chi_max, np.power(d, l) if l <= L/2 else np.power(d, L-l))
+
+    def truncate(_S, _threshold):
+
+        S = np.copy(_S)
+        Snorm = np.sum(S**2)
+        S[S < _threshold] = 0.0
+
+        return S * Snorm / np.sum(S**2)
+
+    def solve_inversion(_D, _Q, _threshold):
+
+        A = np.conj(Q.T) @ np.kron(np.eye(d), np.diag(_D)) @ Q
+
+        vprint("Solving inverse square root of A = Q^+ S^2 Q, dim(A) = {} x {}".format(*A.shape), _verbosity, VLevel.DEBUG)
+        U, S, Vh = recursive_svd(A, 1e-14, _verbosity = _verbosity)
+
+        assert np.all(np.isclose(S.imag, 0.0)), "non-vanishing imaginary part in singular values detected, violated condition is np.isclose(S.imag, 0.0) = {}".format(np.isclose(S.imag, 0.0))
+
+        S = truncate(S, _threshold)
+        Sinv = np.array([1.0 / np.sqrt(s) if s > 0.0 else 0.0 for s in S])
+        return np.conj(Vh.T) @ np.diag(Sinv) @ np.conj(U.T)
+
+
+    threshold = 1.e-16
+    prev_S = np.array([1.0])
+    list_M = list()
+    list_rho = list()
+
+    for l in range(L):
+
+        left_chi_max = get_max_bond_dim(l)
+        right_chi_max = get_max_bond_dim(l+1)
+
+        vprint("Determining Vidal-representation of MPS tensor M@{}, dim(M_{}) = {} x {}".format(l, l, left_chi_max, right_chi_max), _verbosity, VLevel.INFO)
+
+        '''
+        We define Mfused as the stacked set of MPS-matrices at site l: Mfused = [M^{\sigma_1}, ..., M^{\sigma_d}]^t := Q*V
+        '''
+        if d*left_chi_max >= right_chi_max:
+            Q = random_unitary_matrix(d*left_chi_max)[:,:right_chi_max]
+        else:
+            Q = np.conj(random_unitary_matrix(right_chi_max)[:,:d*left_chi_max].T)
+
+        assert np.isclose(np.linalg.norm(np.eye(Q.shape[1]) - np.conj(Q.T)@Q), 0.0)
+
+        (col_dim, row_dim) = Q.shape
+        '''
+        Now Id = V^+ Q^+ S^2 Q V where S^2 is the d-block-diagonal matrix with rho_l on its blocks
+        In order to find V we set A = Q^+ S^2 Q, yielding V = A^{-1/2}
+        '''
+        V = solve_inversion(prev_S**2, Q, threshold)
+        Mfused = Q @ V
+
+        # Get next Schmidt-value distribution
+        angles_center_l = generate_angle_maximally_entangled_eigenvalues(right_chi_max)
+        next_S = truncate(np.abs(gaussian_point_on_the_n_sphere_in_a_disk(right_chi_max, standard_deviation, angles_center_l)), threshold)
+
+        rho = next_S**2
+        assert np.isclose(np.sum(rho), 1.0), "Normalization constraint violated for Schmidt value distribution, |np.sum(S**2)| = {}".format(np.sum(rho))
+
+        list_rho.append(rho)
+
+        # now decompose Mfused to geht actual site tensors
+        M_l = np.zeros([d, left_chi_max, right_chi_max], dtype =complex)
+
+        S_matrix = np.reshape(np.diag(next_S), [len(next_S), len(next_S)])
+        for idx in range(d):
+            M_l[idx, :, :] = Mfused[idx*left_chi_max:(idx+1)*left_chi_max,:] @ S_matrix
+            vprint("M_{}@site {}\n{}".format(idx, l, M_l[idx, :, :]), _verbosity, VLevel.DEBUG)
+
+        list_M.append(np.copy(M_l))
+        prev_S = next_S
+
+    return list_M, list_rho
+
+
+
+
+
+
+def produce_a_random_mps_eigenvalues_in_a_disk(L, d:int=2, diameter_disk = 0.01):
     """
     Input:
     L (int): number of site (assumed even for simplicity for the moment).
@@ -693,7 +885,7 @@ def produce_a_random_mps_eigenvalues_in_a_disk(L, d=2, diameter_disk = 0.01):
     list_left_normalization_error
     rho_middle
     
-    The function constructs in the decreasing order, the matrix M to produce a random product state. 
+    The function constructs in the decreasing order, the matrices M to produce a random product state. 
     """
     rho_l = np.array([[1]]) # Initial density matrix rho_L.
     list_M = [] # I store the matrices M in a list. 

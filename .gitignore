@@ -1,6 +1,8 @@
 # Ignore all .log files
 *.log
-
+*.png
+*.npy
+*.npz
 # Ignore Python virtual environments
 .venv/
 
