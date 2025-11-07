@@ -79,4 +79,5 @@ dims = [2,2]
 keep = [0]
 rho_A = partial_trace(rho, dims, keep)
 U, S, Vh = svd(rho_A, lapack_driver = 'gesvd')
+print(f"list_rho[0]{list_rho[0]}")
 print(f"S{S}")
