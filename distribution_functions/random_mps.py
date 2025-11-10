@@ -34,7 +34,16 @@ def random_unitary_matrix(n):
     Q = Q * (d / np.abs(d)) 
     return Q 
  
-def recursive_svd(M, threshold, _verbosity: int = VLevel.INFO, lapack_driver = 'gesvd'):
+def compute_sqr_inv(_S):
+
+    if len(_S.shape) == 1:
+        return np.array([1.0 / np.sqrt(s) if s > 0.0 else 0.0 for s in _S])
+    elif len(_S.shape) == 2:
+        return np.diag(np.array([1.0 / np.sqrt(s) if s > 0.0 else 0.0 for s in np.diag(_S)]))
+    else:
+        raise ValueError("Invalid shape of input matrix: {}".format(_S.shape))
+
+def recursive_pseudo_inverse(M, threshold, _verbosity: int = VLevel.INFO, lapack_driver = 'gesvd'):
 
     U, S, Vh = svd(M, lapack_driver = lapack_driver)
 
@@ -51,6 +60,8 @@ def recursive_svd(M, threshold, _verbosity: int = VLevel.INFO, lapack_driver = '
             i_threshold = idx
             break
 
+    S_sqr_inv = compute_sqr_inv(S)
+
     # If there are singular valus below threshold, recursively call svd for this subspace
     if i_threshold < len(S):
 
@@ -60,13 +71,13 @@ def recursive_svd(M, threshold, _verbosity: int = VLevel.INFO, lapack_driver = '
         Vh_reduced = Vh[i_threshold:,:]
         M_reduced = np.conj(U_reduced).T @ (M @ np.conj(Vh_reduced).T)
 
-        U_prime, S_prime, Vh_prime = recursive_svd(M_reduced / threshold , threshold)
-        
+        U_prime, S_sqr_inv_prime, Vh_prime = recursive_pseudo_inverse(M_reduced / threshold , threshold)
+
         U[:,i_threshold:] = U[:,i_threshold:] @ U_prime
-        S[i_threshold:] = S_prime * threshold
+        S_sqr_inv[i_threshold:] = S_sqr_inv_prime / np.sqrt(threshold)
         Vh[i_threshold:,:] = Vh_prime @ Vh[i_threshold:,:]
 
-    return U, S, Vh
+    return U, S_sqr_inv, Vh
 
 def produce_random_mps(L: int, chi_max: int, d: int = 2, _verbosity: int = VLevel.INFO):
     """
@@ -92,32 +103,30 @@ def produce_random_mps(L: int, chi_max: int, d: int = 2, _verbosity: int = VLeve
         (Why this choice of normalization ? It fixes the sum of the square of the diag entries). 
         """
         S = np.copy(_S)
-        Snorm = np.sum(S**2) # Due to the normalisation  of rho (sum of the square of the eigenvalues =1), it is equal to d. No it isn't. 
+        Snorm = np.sum(S**2)
         S[S < _threshold] = 0.0
         
-        return S * Snorm / np.sum(S**2)
+        return S / np.sum(S**2)
 
     def solve_inversion(_D, _Q, _threshold):
         """
         Return:
         A = Q^+ S^2 Q
-
-
         """
 
         A = np.conj(_Q.T) @ np.kron(np.eye(d), np.diag(_D)) @ _Q
 
         vprint("Solving inverse square root of A = Q^+ S^2 Q, dim(A) = {} x {}".format(*A.shape), _verbosity, VLevel.DEBUG)
-        U, Sigma, Vh = recursive_svd(A, 1e-14, _verbosity = _verbosity)
+        U, Sigma_sqr_inv, Vh = recursive_pseudo_inverse(A, 1e-4, _verbosity = _verbosity)
 
-        assert np.all(np.isclose(Sigma.imag, 0.0)), "non-vanishing imaginary part in singular values detected, violated condition is np.isclose(S.imag, 0.0) = {}".format(np.isclose(S.imag, 0.0))
+        assert np.all(np.isclose(Sigma_sqr_inv.imag, 0.0)), "non-vanishing imaginary part in singular values detected, violated condition is np.isclose(S.imag, 0.0) = {}".format(np.isclose(S.imag, 0.0))
 
-        Sigma = truncate(Sigma, _threshold)
-        Sigma_sqr_inv = np.array([1.0 / np.sqrt(s) if s > 0.0 else 0.0 for s in Sigma])
+        # Sigma_sqr_inv = np.array([1.0 / np.sqrt(s) if s > 0.0 else 0.0 for s in Sigma])
         return np.conj(Vh.T) @ np.diag(Sigma_sqr_inv) @ np.conj(U.T)
 
 
     threshold = 1.e-32
+    inv_threshold = 1.e-16
     prev_S = np.array([1.0])
     list_M = list()
     list_rho = list()
@@ -130,7 +139,7 @@ def produce_random_mps(L: int, chi_max: int, d: int = 2, _verbosity: int = VLeve
         vprint("Determining Vidal-representation of MPS tensor M@{}, dim(M_{}) = {} x {}".format(l, l, left_chi_max, right_chi_max), _verbosity, VLevel.INFO)
 
         '''
-        We define Mfused as the stacked set of MPS-matrices at site l: Mfused = [M^{\sigma_1}, ..., M^{\sigma_d}]^t := Q*V
+        We define Q as a stacked set of canonical matrices: Q = [Q^{\sigma_1}, ..., Q^{\sigma_d}]^t
         '''
         if d*left_chi_max >= right_chi_max: # This condition is always fulfilled when the MPS is done from left to right.
             Q = random_unitary_matrix(d*left_chi_max)[:,:right_chi_max]
@@ -140,11 +149,11 @@ def produce_random_mps(L: int, chi_max: int, d: int = 2, _verbosity: int = VLeve
         # Check that the columns of Q are orthonormal.
         assert np.isclose(np.linalg.norm(np.eye(Q.shape[1]) - np.conj(Q.T)@Q), 0.0)
 
-        ''' WRONG:
-        Now Id = V^+ Q^+ S^2 Q V where S^2 is the d-block-diagonal matrix with rho_l on its blocks
+        '''
+        Now we search V such that Id = Mfused^+ Mfused = V^+ Q^+ S^2 Q V where S^2 is the d-block-diagonal matrix with rho_l on its blocks and Mfused the desired fused set of site matrices
         In order to find V we set A = Q^+ S^2 Q, yielding V = A^{-1/2}
         '''
-        V = solve_inversion(prev_S**2, Q, threshold)
+        V = solve_inversion(prev_S**2, Q, inv_threshold)
         Mfused = Q @ V
 
         # Get next Schmidt-value distribution
