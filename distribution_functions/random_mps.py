@@ -121,10 +121,13 @@ def produce_random_mps(L: int, chi_max: int, d: int = 2, _verbosity: int = VLeve
 
         assert np.all(np.isclose(Sigma_sqr_inv.imag, 0.0)), "non-vanishing imaginary part in singular values detected, violated condition is np.isclose(S.imag, 0.0) = {}".format(np.isclose(S.imag, 0.0))
 
+        if np.any(Sigma_sqr_inv > 1e8):
+            vprint("Warning, numerical threshold reached during inversion, consider using smaller bond dimensions or narrow eigenvalue distribution", _verbosity, VLevel.INFO)
+
         return np.conj(Vh.T) @ np.diag(Sigma_sqr_inv) @ np.conj(U.T)
 
 
-    threshold = 1.e-32
+    threshold = 1.e-08
     prev_S = np.array([1.0])
     list_M = list()
     list_rho = list()
@@ -160,8 +163,6 @@ def produce_random_mps(L: int, chi_max: int, d: int = 2, _verbosity: int = VLeve
 
         rho = next_S**2
         assert np.isclose(np.sum(rho), 1.0), "Normalization constraint violated for Schmidt value distribution, |np.sum(S**2)| = {}".format(np.sum(rho))
-        if np.any(rho < 1e-16):
-            vprint("Warning, numerical threshold reached for eigenvalues, consider using smaller bond dimensions or narrow eigenvalue distribution", _verbosity, VLevel.INFO)
 
         list_rho.append(rho)
 
