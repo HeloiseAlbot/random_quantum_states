@@ -127,7 +127,7 @@ def produce_random_mps(L: int, chi_max: int, d: int = 2, _verbosity: int = VLeve
         return np.conj(Vh.T) @ np.diag(Sigma_sqr_inv) @ np.conj(U.T)
 
 
-    threshold = 0
+    threshold = 1e-16
     prev_S = np.array([1.0])
     list_M = list()
     list_rho = list()
