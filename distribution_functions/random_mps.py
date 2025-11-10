@@ -108,7 +108,7 @@ def produce_random_mps(L: int, chi_max: int, d: int = 2, _verbosity: int = VLeve
         
         return S / np.sum(S**2)
 
-    def solve_inversion(_D, _Q, _threshold):
+    def solve_inversion(_D, _Q):
         """
         Return:
         A = Q^+ S^2 Q
@@ -121,12 +121,10 @@ def produce_random_mps(L: int, chi_max: int, d: int = 2, _verbosity: int = VLeve
 
         assert np.all(np.isclose(Sigma_sqr_inv.imag, 0.0)), "non-vanishing imaginary part in singular values detected, violated condition is np.isclose(S.imag, 0.0) = {}".format(np.isclose(S.imag, 0.0))
 
-        # Sigma_sqr_inv = np.array([1.0 / np.sqrt(s) if s > 0.0 else 0.0 for s in Sigma])
         return np.conj(Vh.T) @ np.diag(Sigma_sqr_inv) @ np.conj(U.T)
 
 
     threshold = 1.e-32
-    inv_threshold = 1.e-16
     prev_S = np.array([1.0])
     list_M = list()
     list_rho = list()
@@ -153,7 +151,7 @@ def produce_random_mps(L: int, chi_max: int, d: int = 2, _verbosity: int = VLeve
         Now we search V such that Id = Mfused^+ Mfused = V^+ Q^+ S^2 Q V where S^2 is the d-block-diagonal matrix with rho_l on its blocks and Mfused the desired fused set of site matrices
         In order to find V we set A = Q^+ S^2 Q, yielding V = A^{-1/2}
         '''
-        V = solve_inversion(prev_S**2, Q, inv_threshold)
+        V = solve_inversion(prev_S**2, Q)
         Mfused = Q @ V
 
         # Get next Schmidt-value distribution
@@ -162,6 +160,8 @@ def produce_random_mps(L: int, chi_max: int, d: int = 2, _verbosity: int = VLeve
 
         rho = next_S**2
         assert np.isclose(np.sum(rho), 1.0), "Normalization constraint violated for Schmidt value distribution, |np.sum(S**2)| = {}".format(np.sum(rho))
+        if np.any(rho < 1e-15):
+            vprint("Warning, numerical threshold reached for eigenvalues, consider using smaller bond dimensions or narrow eigenvalue distribution", _verbosity, VLevel.INFO)
 
         list_rho.append(rho)
 

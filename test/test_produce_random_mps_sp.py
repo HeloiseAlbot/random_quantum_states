@@ -6,7 +6,7 @@ from distribution_functions.property_calculation_function import partial_trace
 
 L = 16
 d = 2
-chi_max = 32
+chi_max = 20
 # l = 4
 
 # generate random MPS
