@@ -100,9 +100,9 @@ def produce_random_mps(L: int, chi_max: int, d: int = 2, _verbosity: int = VLeve
     def solve_inversion(_D, _Q, _threshold):
         """
         Return:
-        A = Q^+ S^2 Q
-
-
+        V @ Sigma**(-1/2) @ U^\dagger
+        for
+        U, Sigma, V^\dagger = svd(np.conj(_Q.T) @ np.kron(np.eye(d), np.diag(_D)) @ _Q)
         """
 
         A = np.conj(_Q.T) @ np.kron(np.eye(d), np.diag(_D)) @ _Q
@@ -157,7 +157,7 @@ def produce_random_mps(L: int, chi_max: int, d: int = 2, _verbosity: int = VLeve
         list_rho.append(rho)
 
         # now decompose Mfused to get actual site tensors
-        M_l = np.zeros([d, left_chi_max, right_chi_max], dtype =complex)
+        M_l = np.zeros([d, left_chi_max, right_chi_max], dtype = complex)
 
         S_matrix = np.reshape(np.diag(next_S), [len(next_S), len(next_S)])
         for idx in range(d):
