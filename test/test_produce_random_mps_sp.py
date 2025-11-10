@@ -4,7 +4,7 @@ from scipy.linalg import svd
 from distribution_functions.random_mps import produce_random_mps, VLevel, vector_state_from_mps
 from distribution_functions.property_calculation_function import partial_trace
 
-L = 16
+L = 20
 d = 2
 chi_max = 32
 # l = 4
