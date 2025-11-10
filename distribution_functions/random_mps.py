@@ -160,7 +160,7 @@ def produce_random_mps(L: int, chi_max: int, d: int = 2, _verbosity: int = VLeve
 
         rho = next_S**2
         assert np.isclose(np.sum(rho), 1.0), "Normalization constraint violated for Schmidt value distribution, |np.sum(S**2)| = {}".format(np.sum(rho))
-        if np.any(rho < 1e-15):
+        if np.any(rho < 1e-16):
             vprint("Warning, numerical threshold reached for eigenvalues, consider using smaller bond dimensions or narrow eigenvalue distribution", _verbosity, VLevel.INFO)
 
         list_rho.append(rho)
