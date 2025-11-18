@@ -1,6 +1,8 @@
 import numpy as np
 from scipy.stats import unitary_group
 from scipy.linalg import eigh
+from itertools import product
+
 import sys 
 
 # Properties of a quantum state
@@ -58,6 +60,53 @@ def partial_trace(rho, dims, keep):
     reduced_rho = reshaped_rho.reshape(np.prod(dims_keep), np.prod(dims_keep))
     
     return reduced_rho
+
+def partial_trace_2(d, L, rho, sigma_tuples, keep):
+    """
+    Compute the partial trace of the density matrix 'rho'.
+    
+    Parameters:
+    rho (np.ndarray): The density matrix.
+    sigma_tuples (list): tuples mapping rows to tensor indices of columns/rows
+    keep (list): Indices of subsystems to keep after tracing out.
+    
+    Returns:
+    np.ndarray: The reduced density matrix.
+    """
+
+    state_dims = np.array([d] * L)
+    rho_dims = np.concatenate([state_dims, state_dims])
+
+    reshaped_rho = np.zeros(rho_dims, dtype = complex)
+    for cidx, ctuple in enumerate(sigma_tuples):
+        for ridx, rtuple in enumerate(sigma_tuples):
+            rho_tuple = tuple(list(rtuple) + list(ctuple))
+            reshaped_rho[rho_tuple] = rho[ridx, cidx]
+            # print("mapping fused indices [{},{}] -> {}".format(ridx,cidx,rho_tuple))
+
+    trace_out = np.setdiff1d(np.arange(L), keep)
+    
+    # Perform the partial trace
+    for tidx, axis in enumerate(sorted(trace_out, reverse=True)):
+        axis1 = axis
+        axis2 = axis + len(state_dims) - tidx
+        print("tracing out axis pair ({},{})".format(axis1, axis2))
+        reshaped_rho = np.trace(reshaped_rho, axis1=axis1, axis2=axis2)
+    
+    # Reshape the result back to a matrix
+    dims_keep = state_dims[keep]
+    reduced_rho = np.zeros([np.prod(dims_keep), np.prod(dims_keep)], dtype = complex)
+    sigma_tuples_keep = list(product(range(d), repeat = len(keep)))
+    for cidx, ctuple in enumerate(sigma_tuples_keep):
+        for ridx, rtuple in enumerate(sigma_tuples_keep):
+            rho_tuple = tuple(list(rtuple) + list(ctuple))
+            reduced_rho[ridx, cidx] = reshaped_rho[rho_tuple]
+            # print("mapping tensor indices {} -> [{},{}]".format(rho_tuple, ridx, cidx))
+
+    # reduced_rho = reshaped_rho.reshape(np.prod(dims_keep), np.prod(dims_keep))
+    
+    return reduced_rho
+
 
 def compute_bond_dimension_truncating(state, dimensions, epsilon=1e-10):
     # Ensure the state is reshaped as a tensor
