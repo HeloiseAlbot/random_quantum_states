@@ -1,10 +1,9 @@
 import numpy as np
 import scipy as sp
-from scipy.linalg import svd
-from distribution_functions.random_mps_v2 import produce_random_mps_v2, VLevel
+from scipy.linalg import svd, eigh
 from distribution_functions.random_mps import vector_state_from_mps
-from distribution_functions.property_calculation_function import partial_trace
-
+from distribution_functions.random_mps_v2 import produce_random_mps_v2, VLevel
+from distribution_functions.property_calculation_function import partial_trace_2
 from itertools import product
 
 L = 10
@@ -36,27 +35,26 @@ E, V = eigh(rho_A)
 print(f"list_rho[0]{list_rho[0]}")
 print(f"E{E}, sum(E)={np.sum(E)}")
 
+# list_M, list_rho = produce_random_mps_v2(L, 32, d, VLevel.INFO)
+# print(f"list_M:{list_M}")
+# # print(f"list_M[-1]:{list_M[-1]}")
+# print(f"list_rho{list_rho}")
+# # test eigenvalue distributions
+# T = np.array([[1.0]], dtype = complex)
+# for j in range(L):
 
-list_M, list_rho = produce_random_mps_v2(L, 32, d, VLevel.INFO)
-print(f"list_M:{list_M}")
-# print(f"list_M[-1]:{list_M[-1]}")
-print(f"list_rho{list_rho}")
-# test eigenvalue distributions
-T = np.array([[1.0]], dtype = complex)
-for j in range(L):
+#     Mj = list_M[j]
+#     Mfused = np.concatenate((T @ Mj[0,:,:], T @ Mj[1,:,:]), axis = 0)
+#     Mrho = np.conj(Mfused.T) @ Mfused
+#     T = np.diag(np.sqrt(list_rho[j]))
 
-    Mj = list_M[j]
-    Mfused = np.concatenate((T @ Mj[0,:,:], T @ Mj[1,:,:]), axis = 0)
-    Mrho = np.conj(Mfused.T) @ Mfused
-    T = np.diag(np.sqrt(list_rho[j]))
+#     #print(np.vstack((list_rho[j], np.diag(Mrho))))
+#     #print(Mfused)
+#     #print(np.conj(Mfused.T) @ Mfused)
 
-    #print(np.vstack((list_rho[j], np.diag(Mrho))))
-    #print(Mfused)
-    #print(np.conj(Mfused.T) @ Mfused)
-
-    #assert np.isclose(np.sum(np.diag(Mrho)), 1.0), "@site {}, np.sum(np.diag(Mrho)) = {}".format(j, np.sum(np.diag(Mrho)))
-    print("@site {} normalization constraint |np.sum(np.diag(Mrho)) - 1.0| = {}".format(j, abs(np.sum(np.diag(Mrho)) - 1.0)))
-    # print("@site {} distance |rho_j - S^2_j| = {}, normalization constraint |np.sum(np.diag(Mrho)) - 1.0| = {}".format(j, np.linalg.norm(list_rho[j] - np.diag(T)**2), np.sum(np.diag(Mrho)) - 1.0))
+#     #assert np.isclose(np.sum(np.diag(Mrho)), 1.0), "@site {}, np.sum(np.diag(Mrho)) = {}".format(j, np.sum(np.diag(Mrho)))
+#     print("@site {} normalization constraint |np.sum(np.diag(Mrho)) - 1.0| = {}".format(j, abs(np.sum(np.diag(Mrho)) - 1.0)))
+#     # print("@site {} distance |rho_j - S^2_j| = {}, normalization constraint |np.sum(np.diag(Mrho)) - 1.0| = {}".format(j, np.linalg.norm(list_rho[j] - np.diag(T)**2), np.sum(np.diag(Mrho)) - 1.0))
 
 
 
