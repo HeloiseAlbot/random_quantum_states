@@ -1,0 +1,179 @@
+[33mcommit 064e02bdf05b7b498238e3cc433a2359df915a98[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m, [m[1;31mgitlab/master[m[33m)[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Thu Jul 24 17:42:43 2025 +0200
+
+    Small modifications before modifying entanglement_entropy_VS_size.py
+
+[33mcommit b36ee78aeaa0a8089db07a246dc5af5339d167b2[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Tue Jul 15 14:03:19 2025 +0200
+
+    Correction correlation_functions.py
+
+[33mcommit 80b2a6cb9bf208edb6c5d861c11e0687cf57c8dc[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Tue Jul 15 13:59:00 2025 +0200
+
+    Correlation function uses now the efficient method: contraction of tensors
+
+[33mcommit 7216dac310530bdfcc2cbe4b62564ab46f646c10[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Thu Jul 10 16:38:47 2025 +0200
+
+    correlation_functions_test cleaner 2
+
+[33mcommit e04077a7929a279bde5da7984422131858c81a9e[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Thu Jul 10 16:35:43 2025 +0200
+
+    correlation_functions_test cleaner.
+
+[33mcommit 7a3a331b1670ab9cca23613cb359289bf95fac35[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Thu Jul 10 15:07:05 2025 +0200
+
+    test.ipynb Add the evolution of the rupture parameters models
+
+[33mcommit 4be8eec0b0e05eaed0b7c919d305e0df2191472d[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Tue Jul 8 17:46:50 2025 +0200
+
+    correlation_functions.py and rupture_point files
+
+[33mcommit 4e0c49444914e50f6eedbe4dcdfdcf736701a588[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Fri May 9 17:05:23 2025 +0200
+
+    Test criticality of the states
+
+[33mcommit d65cf66120f6766e21bf2152296de503a668de03[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Wed Apr 30 17:31:57 2025 +0200
+
+    File to generate the plot of the linear coeff as a function of the standard derivation
+
+[33mcommit afd8e80ac94c811b48a3daae35ee3d9da8901ede[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Tue Apr 22 17:00:25 2025 +0200
+
+    create test/eigenvalues_distributions_in_disk
+
+[33mcommit cd2f19f57bd6399d987f48bb153d1a2760bcc608[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Fri Apr 11 14:09:25 2025 +0200
+
+    Add the square to the Frobenius norm of the constraint and the eigenvalues are not ordered anymore in the random mps procedure.
+
+[33mcommit 153a7a2d10d15b54090e50ec62f32f83e98bb5cd[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Tue Apr 8 15:39:47 2025 +0200
+
+    Lots fo test files added
+
+[33mcommit 068bef8038ec5190b618ef44e51273580605eee7[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Fri Feb 21 18:50:17 2025 +0100
+
+    Commute the Shannon entropy of our distribution for the joint probability of 2 variables (so in dimension n=3)
+
+[33mcommit 3ae433f35db685979670f67a2c78d2879acbc8ec[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Thu Feb 20 18:04:21 2025 +0100
+
+    Plot of the joint density probability functions and of the Shannon entropy
+
+[33mcommit e6c58a390bf1d579a14c5217e2e61c726f833700[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Tue Dec 10 15:01:46 2024 +0100
+
+    Code convention kl_divergence_tools.py, correction
+
+[33mcommit f6765c42fe8d81a37ee3fe14346666c15fb75342[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Tue Dec 10 15:00:34 2024 +0100
+
+    Code convention kl_divergence_tools.py
+
+[33mcommit 5ba848ffb58ea693210808eb71d3c4a458b2a4f4[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Tue Dec 10 14:49:12 2024 +0100
+
+    Automatisation production of samples of random states, produce_samples_Haar_measure created. Cross entropy function created.
+
+[33mcommit cb2b29b89cdcca19ce8a138e2c9812fcf828dbd2[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Mon Dec 9 15:48:12 2024 +0100
+
+    Automatisation production of samples of random states, creation of the functions.
+
+[33mcommit da001befb56660331b8021d80192c314696315e5[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Wed Dec 4 16:56:18 2024 +0100
+
+    Put the limit for the disk_diameter in the function produce_a_random_mps_eigenvalues_in_a_disk_center_moving
+
+[33mcommit c42078679aae5ca8dccac24fc08d554f820b6f52[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Wed Dec 4 15:31:14 2024 +0100
+
+    Before in generate_angles_between_max_entangled_and_product_state_eigenvalues, v_0 was the maximally mixed state and v_1 was the product state. I change now v_0 is the product state and v_1 is the maximally mixed state.
+
+[33mcommit c93d64390735f9e15c3dd35e93e7d25273f5cebc[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Mon Dec 2 16:08:35 2024 +0100
+
+    Small modifications to send the bash of kl_divergence_disk_moving
+
+[33mcommit 2f11b697490cda304afc1c36fb3af38d5768d493[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Fri Nov 29 17:14:25 2024 +0100
+
+    produce_a_random_mps_eigenvalues_in_a_disk_center_moving running
+
+[33mcommit 4917c68f3d9969c51f9b6cd483849011620fb522[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Fri Nov 29 15:48:22 2024 +0100
+
+    generate_angles_between_max_entangled_and_product_state_eigenvalues modified and explained
+
+[33mcommit f2bf9d3e3052af7260a945d4b84ae0d71a68a11b[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Thu Nov 28 14:09:15 2024 +0100
+
+    generate_angles_between_max_entangled_and_product_state_eigenvalues added
+
+[33mcommit 85b1bd803fd81489c4b216529517f83e09d3ac5c[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Tue Nov 26 13:39:24 2024 +0100
+
+    Correction random_state_vector_from_mps_eigenvalues_in_a_disk
+
+[33mcommit 90da8b3c188b4e80b3fd4bbf9853b83e6057348b[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Tue Nov 26 11:23:47 2024 +0100
+
+    Files to send the job of the kl_divergence calculations.
+
+[33mcommit ddb7cd3c3bc26cdfa12894f6e185a6dd077c8229[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Tue Nov 26 09:40:41 2024 +0100
+
+    Add .gitignore file
+
+[33mcommit 0fa5c3180802f156e097a9d2804c345e248ef9f9[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Mon Nov 25 18:16:39 2024 +0100
+
+    compute_kl_divergence function created.
+
+[33mcommit 6340e0650c112d05d492026d85fecf84f83ae9cd[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Mon Nov 25 18:01:39 2024 +0100
+
+    Organisation of the project. The function produce_a_point_in_a_disk runs.
+
+[33mcommit 82b8bae39baae64b0d5ee5a6392bb839a8135f0a[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Wed Nov 13 17:22:54 2024 +0100
+
+    Haar random states and files to plot them.
