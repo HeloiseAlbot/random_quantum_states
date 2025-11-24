@@ -36,10 +36,11 @@ def random_unitary_matrix(n):
  
 def compute_sqr_inv(_S):
 
+    eps = 1e-8
     if len(_S.shape) == 1:
-        return np.array([1.0 / np.sqrt(s) if s > 0.0 else 0.0 for s in _S])
+        return np.array([1.0 / np.sqrt(s) if s > eps else 0.0 for s in _S])
     elif len(_S.shape) == 2:
-        return np.diag(np.array([1.0 / np.sqrt(s) if s > 0.0 else 0.0 for s in np.diag(_S)]))
+        return np.diag(np.array([1.0 / np.sqrt(s) if s > eps else 0.0 for s in np.diag(_S)]))
     else:
         raise ValueError("Invalid shape of input matrix: {}".format(_S.shape))
 
@@ -180,6 +181,118 @@ def produce_random_mps(L: int, chi_max: int, d: int = 2, _verbosity: int = VLeve
 
     return list_M, list_rho
 
+def produce_random_mps_2(L: int, chi_max: int, d: int = 2, _verbosity: int = VLevel.INFO):
+    """
+    Input:
+    L (int): the number of sites in the chain.
+    chi_max (int): the bond dimension of the MPS.
+    d (int): the dimension of the local Hilbert space.
+
+    Return:
+    """
+
+    def get_max_bond_dim(l: int):
+        '''
+            l counts the bonds starting from the left
+        '''
+        return min(chi_max, np.power(d, l) if l <= L/2 else np.power(d, L-l))
+
+    def truncate(_S, _threshold):
+        """
+        Return:
+        S: a copy of the matrix _S where the entries which are smaller than _threshold are set to 0. 
+        The "normalization of S" is correct (equal to d) for _S diagonal (S is then also diagonal). 
+        (Why this choice of normalization ? It fixes the sum of the square of the diag entries). 
+        """
+        S = np.copy(_S)
+        Snorm = np.sum(S**2)
+        S[S < _threshold] = 0.0
+        
+        return S / np.sum(S**2)
+
+    threshold = 1e-08
+    list_B = [None] * L
+
+    for reverse_l in range(L):
+
+        l = L - reverse_l - 1
+        left_chi_max = get_max_bond_dim(l)
+        right_chi_max = get_max_bond_dim(l+1)
+
+        vprint("Sampling random right-canonical MPS tensor B@{}, dim(B_{}) = {} x {}".format(l, l, left_chi_max, right_chi_max), _verbosity, VLevel.INFO)
+
+        Q = np.conj(random_unitary_matrix(d*right_chi_max)[:,:left_chi_max].T)
+
+        # Check that the columns of Q are orthonormal.
+        assert np.isclose(np.linalg.norm(np.eye(Q.shape[0]) - Q @ np.conj(Q.T)), 0.0)
+
+        # now decompose Mfused to get actual site tensors
+        list_B[l] = np.zeros([d, left_chi_max, right_chi_max], dtype =complex)
+
+        for idx in range(d):
+            list_B[l][idx,:,:] = Q[:,idx*right_chi_max:(idx+1)*right_chi_max]
+            vprint("B_{}@site {}\n{}".format(idx, l, list_B[l][idx, :, :]), _verbosity, VLevel.DEBUG)
+
+    list_M = list()
+    list_S_random = list()
+    list_S = list()
+
+    for l in range(L):
+
+        if (l > 0):
+            # scale in new singular values in prev. A tensor
+            vprint("Applying sampled singular values set {} to left-canonical MPS tensor A@{}".format(l-1, l-1), _verbosity, VLevel.INFO)
+            for idx in range(d):
+                list_M[l-1][idx,:,:] = list_M[l-1][idx,:,:] @ np.diag(list_S_random[l-1])
+
+        if (l < L-1):
+
+            B_l = list_B[l]
+            left_chi_max = B_l.shape[1]
+            right_chi_max = B_l.shape[2]
+
+            vprint("Sampling Schmidt-values at bond ({},{})".format(l,l+1), _verbosity, VLevel.INFO)
+
+            # Get next Schmidt-value distribution
+            next_S_random = truncate(np.abs(random_eigenvalues_from_n_sphere(right_chi_max)), threshold)
+            sort_idxs = np.argsort(next_S_random)[::-1]
+            next_S_random = next_S_random[sort_idxs]
+            assert np.isclose(np.sum(next_S_random**2), 1.0), "Normalization constraint violated for Schmidt value distribution, |np.sum(S**2)| = {}".format(np.sum(rho))
+            list_S_random.append(next_S_random)
+            M_fused = np.zeros([d * left_chi_max, right_chi_max], dtype = complex)
+            for idx in range(d):
+                M_fused[idx*left_chi_max:(idx+1)*left_chi_max,:] = B_l[idx,:,:]
+
+            # Do the svd to get left canonical site tensor, also make sure signular values are ordered decreasingly and truncate in bond-dim
+            U, S, V = svd(M_fused)
+            sort_idxs = np.argsort(S)[::-1]
+            S = S[sort_idxs[:right_chi_max]]
+            S /= np.sqrt(np.sum(S**2))
+            U = U[:,sort_idxs[:right_chi_max]]
+            V = V[sort_idxs[:right_chi_max],:]
+            list_S.append(next_S_random)
+
+            # split svd-decomposed U-tensor and reshape into new A-matrices
+            M_l = np.zeros([d, left_chi_max, right_chi_max], dtype =complex)
+            for idx in range(d):
+                M_l[idx, :, :] = U[idx*left_chi_max:(idx+1)*left_chi_max,:]
+            list_M.append(M_l)
+
+            # 
+            SV = np.diag(list_S[-1]) @ V
+            for idx in range(d):
+                list_B[l+1][idx,:,:] = SV @ list_B[l+1][idx,:,:]
+        else:
+            list_M.append(list_B[l])
+
+        if (l > 0):
+            # scale out old singular values in current A-tensor
+            vprint("Removing old singular values set {} from left-canonical MPS tensor A@{}".format(l-1, l), _verbosity, VLevel.INFO)
+            for idx in range(d):
+                list_M[l][idx,:,:] = np.diag(1.0 / list_S[l-1]) @ list_M[l][idx,:,:]
+
+    return list_M, [S**2 for S in list_S_random]
+
 
 def vector_state_from_mps(list_M: list, L:int, d=2)->np.array:
     """
@@ -196,8 +309,10 @@ def vector_state_from_mps(list_M: list, L:int, d=2)->np.array:
     # Initialize vector_state with shape (d, d, ..., d) repeated L times
     vector_state_shape = (d,) * L
     vector_state = np.zeros(vector_state_shape, dtype=object)
+    vector_labels = np.zeros(vector_state_shape, dtype=object)
+    sigma_tuples = list(product(range(d), repeat=L))
     # Iterate over all combinations of sigma_1, sigma_2, ..., sigma_L
-    for sigma_tuple in product(range(d), repeat=L):
+    for sidx, sigma_tuple in enumerate(sigma_tuples):
         # Initialize product as identity matrix of size (n x n)
         product_matrix = np.eye(1, dtype="complex")
 
@@ -208,11 +323,13 @@ def vector_state_from_mps(list_M: list, L:int, d=2)->np.array:
 
         # Assign the result to vector_state at the index sigma_1, ..., sigma_L
         vector_state[sigma_tuple] = product_matrix
+        vector_labels[sigma_tuple] = sidx
 
     # Now vector_state[sigma_1, sigma_2, ..., sigma_L] holds the desired matrix product
     vector_state = vector_state.reshape((d**L))
     state_flat = np.array([x[0] for x in vector_state])
-    return state_flat.reshape(d**L)
+    labels_flat = vector_labels.reshape((d**L))
+    return state_flat.reshape(d**L), sigma_tuples, labels_flat
 
 def random_point_on_the_n_sphere(n, r=1):
     # Step 1: Generate the random angles
