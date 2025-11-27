@@ -34,15 +34,6 @@ def random_unitary_matrix(n):
     Q = Q * (d / np.abs(d)) 
     return Q 
  
-def compute_sqr_inv(_S):
-
-    if len(_S.shape) == 1:
-        return np.array([1.0 / np.sqrt(s) if s > 0.0 else 0.0 for s in _S])
-    elif len(_S.shape) == 2:
-        return np.diag(np.array([1.0 / np.sqrt(s) if s > 0.0 else 0.0 for s in np.diag(_S)]))
-    else:
-        raise ValueError("Invalid shape of input matrix: {}".format(_S.shape))
-
 def pseudo_inverse_diag(_S, threshold):
     _S_inv = np.array([1/s if s > threshold else 0.0 for s in _S])
     return _S_inv
@@ -71,10 +62,11 @@ def produce_random_mps_v2(L: int, chi_max: int, d: int = 2, _verbosity: int = VL
         (Why this choice of normalization ? It fixes the sum of the square of the diag entries). 
         """
         S = np.copy(_S)
-        Snorm = np.sum(S**2)
-        S[S < _threshold] = 0.0
+        count_below = np.sum(S < _threshold)
+        print("Number of entries below threshold:", count_below)
+        S[S < _threshold] = 0.0 
 
-        return S / np.sum(S**2)
+        return S / np.sum(S**2), count_below
 
     # def truncated_cholesky(C, chol_threshold):
     #     n = C.shape[0]
@@ -96,82 +88,163 @@ def produce_random_mps_v2(L: int, chi_max: int, d: int = 2, _verbosity: int = VL
     #     return L_padded
 
 
-    def lowrank_L_padded_with_zeros(C, m, threshold=1e-12):
-        n = C.shape[0]
-        assert m >= n or m >= 0  # m can be > n; no strict requirement
+    # def lowrank_L_padded_with_zeros(C, m, threshold=1e-12):
+    #     n = C.shape[0]
+    #     assert m >= n or m >= 0  # m can be > n; no strict requirement
 
-        # eigendecomposition (symmetric/Hermitian)
-        eigvals, eigvecs = np.linalg.eigh(C)
-        # keep only positive eigenvalues above threshold
-        mask = eigvals > threshold
-        eigvals_trunc = eigvals[mask]
-        eigvecs_trunc = eigvecs[:, mask]
+    #     # eigendecomposition (symmetric/Hermitian)
+    #     eigvals, eigvecs = np.linalg.eigh(C)
+    #     # keep only positive eigenvalues above threshold
+    #     mask = eigvals > threshold
+    #     eigvals_trunc = eigvals[mask]
+    #     eigvecs_trunc = eigvecs[:, mask]
 
-        # small factor L0 (n x r)
-        L0 = eigvecs_trunc @ np.diag(np.sqrt(eigvals_trunc))  # shape (n, r)
-        r = L0.shape[1]
+    #     # small factor L0 (n x r)
+    #     L0 = eigvecs_trunc @ np.diag(np.sqrt(eigvals_trunc))  # shape (n, r)]
+    #     L0_lower_tri, Q_L0 = np.linalg.cholesky(L0)
+    #     print(f"L0:{L0}")
+    #     r = L0.shape[1]
 
-        if m < r:
-            raise ValueError("m is smaller than the number of retained eigenvalues (r).")
-        # pad with zero columns to get shape (n, m)
-        L = np.zeros((n, m), dtype=C.dtype)
-        L[:, :r] = L0
-        return L
+    #     if m < r:
+    #         raise ValueError("m is smaller than the number of retained eigenvalues (r).")
+    #     # pad with zero columns to get shape (n, m)
+    #     L = np.zeros((n, m), dtype=C.dtype)
+    #     L[:, :r] = L0
+    #     print(f"L:{L}")
+    #     return L
 
     threshold = 1e-8
-    list_B = list()
+    list_M = list()
     list_rho = list()
+    
+    list_rho.append(np.array([[1.]]))
 
-    # Initialization: I need to do it random. Here, it is to start. 
-    B_L = np.array([[[1],[0]],[[0],[1]]])
-    list_B.append(B_L)
-
-    B_l = B_L
     # Check the end and the start. 
-    for l in range(L-1, 0, -1):
-        
-
+    for l in range(L-1, int(L/2-0.5), -1):
         left_chi_max = get_max_bond_dim(l) # m_{l-1} in my notations
         right_chi_max = get_max_bond_dim(l+1) # m_{l} in my notations
-        print(f"l={l}, m_l={right_chi_max} and m_l-1={left_chi_max}")
-        # vprint("Determining Vidal-representation of MPS tensor M@{}, dim(M_{}) = {} x {}".format(l, l, left_chi_max, right_chi_max), _verbosity, VLevel.INFO)
+        # print(f"l={l}, m_l={right_chi_max} and m_l-1={left_chi_max}")
+        vprint("Determining Vidal-representation of MPS tensor M@{}, dim(M_{}) = {} x {}".format(l, l, left_chi_max, right_chi_max), _verbosity, VLevel.INFO)
         
         # Get next Schmidt-value distribution. The following is the diagonal of eigenvalues.
-        S_l_minus_1_just_the_diag = truncate(np.abs(random_eigenvalues_from_n_sphere(left_chi_max)), threshold)
+        S_l_minus_1_just_the_diag, count_below = truncate(np.abs(random_eigenvalues_from_n_sphere(left_chi_max)), threshold)
+
         rho_l_minus_1 = S_l_minus_1_just_the_diag**2 
         assert np.isclose(np.sum(rho_l_minus_1), 1.0), "Normalization constraint violated for Schmidt value distribution, |np.sum(S**2)| = {}".format(np.sum(rho))
 
         list_rho.insert(0, rho_l_minus_1)
 
         S_l_minus_1 = np.diag(S_l_minus_1_just_the_diag)
-
-        S_l_minus_1_inv = pseudo_inverse_diag(S_l_minus_1_just_the_diag, 1e-4)
+        S_l_minus_1_inv_just_the_diag = pseudo_inverse_diag(S_l_minus_1_just_the_diag, 1e-4)
 
         X = random_unitary_matrix(left_chi_max)
         # Check that the columns of X are orthonormal.
         assert np.isclose(np.linalg.norm(np.eye(X.shape[1]) - np.conj(X.T)@X), 0.0)
 
-        # Find a more efficient way than the next line.
-        C = (X.conj().T) @ (S_l_minus_1**2) @ X
-        U, s, Vt = np.linalg.svd(C)
-        if left_chi_max >= right_chi_max: 
-            L_lower_tri = U @ np.diag(np.sqrt(s))
-        else:
-            L_lower_tri = lowrank_L_padded_with_zeros(C, m= d*right_chi_max, threshold=1e-12)
-
-        # L_lower_tri = np.linalg.cholesky(C)
-        # L_lower_tri =  truncated_cholesky(C, 1e-8)
-        B_l = np.diag(S_l_minus_1_inv) @ X @ L_lower_tri
+        # See my notes to see why the coefficient (d**2) appears.
+        C = (d**2)*(X.conj().T) @ (S_l_minus_1**2) @ X
         
+        if count_below == 0: # C is positive definite.
+            L_lower_tri = np.linalg.cholesky(C)
+        else: # C is not positive definite.
+            L0_lower_tri = np.linalg.cholesky(C)
+            L_lower_tri = np.zeros([left_chi_max, d * right_chi_max])
+            _, r = L0_lower_tri.shape
+            L_lower_tri[:,:r] = L0_lower_tri
+        # try:
+            # L = np.linalg.cholesky(C)   # L is lower-triangular, C = L @ L.conj().T
+        # except np.linalg.LinAlgError:
+            # Do something
+
+            # L_lower_tri = lowrank_L_padded_with_zeros(C, m= d*right_chi_max, threshold=1e-8)
+        print(f"Expected dimension for l={l}: [left_chi_max, d* right_chi_max]={[left_chi_max, d* right_chi_max]}")
+        print(f"Dimensions {L_lower_tri.shape}")
+
+
+        # print(f"L_lower_tri: {L_lower_tri}")
+
+        # L_lower_tri =  truncated_cholesky(C, 1e-8)
+        # if l==0:
+        #     diag_s = np.diag(S_l_minus_1_inv_just_the_diag)
+        #     diag_s = diag_s.reshape(1,1)
+        #     B_l = diag_s @ X @ L_lower_tri
+        # else:
+        # See my notes to see why the coefficient (1/d) appears.
+        B_l = (1/d)*np.diag(S_l_minus_1_inv_just_the_diag) @ X @ L_lower_tri 
+
+ 
+
         # now decompose B_l_minus_1 to get actual site tensors
         B_sigma_l = np.zeros([d, left_chi_max, right_chi_max], dtype = complex)
         for idx in range(d):
             B_sigma_l[idx, :, :] = B_l[:,idx*right_chi_max:(idx+1)*right_chi_max] 
             vprint("B_{}@site {}\n{}".format(idx, l, B_sigma_l[idx, :, :]), _verbosity, VLevel.DEBUG)
+        list_M.insert(0, np.copy(B_sigma_l))
+    for l in range(0, int(L/2), 1):
+        left_chi_max = get_max_bond_dim(l) # m_{l-1} in my notations
+        right_chi_max = get_max_bond_dim(l+1) # m_{l} in my notations
+        # print(f"l={l}, m_l={right_chi_max} and m_l-1={left_chi_max}")
+        vprint("Determining Vidal-representation of MPS tensor M@{}, dim(M_{}) = {} x {}".format(l, l, left_chi_max, right_chi_max), _verbosity, VLevel.INFO)
+        
+        # Get next Schmidt-value distribution. The following is the diagonal of eigenvalues.
+        S_l_plus_1_just_the_diag, count_below = truncate(np.abs(random_eigenvalues_from_n_sphere(right_chi_max)), threshold)
+
+        rho_l_plus_1 = S_l_plus_1_just_the_diag**2 
+        assert np.isclose(np.sum(rho_l_plus_1), 1.0), "Normalization constraint violated for Schmidt value distribution, |np.sum(S**2)| = {}".format(np.sum(rho))
+
+        list_rho.insert(l, rho_l_plus_1)
+
+        S_l_plus_1 = np.diag(S_l_plus_1_just_the_diag)
+        S_l_plus_1_inv_just_the_diag = pseudo_inverse_diag(S_l_plus_1_just_the_diag, 1e-4)
+
+        X = random_unitary_matrix(right_chi_max)
+        # Check that the columns of X are orthonormal.
+        assert np.isclose(np.linalg.norm(np.eye(X.shape[1]) - np.conj(X.T)@X), 0.0)
+
+        # See my notes to see why the coefficient (d**2) appears.
+        C = (d**2)*X @ (S_l_plus_1**2) @ (X.conj().T)
+
+        
+        if count_below == 0: # C is positive definite.
+            L_lower_tri = np.linalg.cholesky(C)
+        else: # C is not positive definite.
+            L0_lower_tri = np.linalg.cholesky(C)
+            L_lower_tri = np.zeros([left_chi_max, d * right_chi_max])
+            _, r = L0_lower_tri.shape
+            L_lower_tri[:,:r] = L0_lower_tri
+        # try:
+            # L = np.linalg.cholesky(C)   # L is lower-triangular, C = L @ L.conj().T
+        # except np.linalg.LinAlgError:
+            # Do something
+
+            # L_lower_tri = lowrank_L_padded_with_zeros(C, m= d*right_chi_max, threshold=1e-8)
+        print(f"Expected dimension for l={l}: [right_chi_max, d*left_chi_max ]={[right_chi_max, d* left_chi_max]}")
+        print(f"Dimensions {L_lower_tri.shape}")
 
 
-        list_B.insert(0, np.copy(B_sigma_l))
-    return list_B, list_rho
+        # print(f"L_lower_tri: {L_lower_tri}")
+
+        # L_lower_tri =  truncated_cholesky(C, 1e-8)
+        # if l==0:
+        #     diag_s = np.diag(S_l_minus_1_inv_just_the_diag)
+        #     diag_s = diag_s.reshape(1,1)
+        #     B_l = diag_s @ X @ L_lower_tri
+        # else:
+        # See my notes to see why the coefficient (1/d) appears.
+        A_l_plus_1 = (1/d)*((L_lower_tri.conj().T)) @ X @ np.diag(S_l_plus_1_inv_just_the_diag) 
+        print(f"dim A_l_plus_1:{A_l_plus_1.shape}") 
+
+ 
+
+        # now decompose A_l_plus_1 to get actual site tensors
+        A_sigma_l_plus_1 = np.zeros([d, left_chi_max, right_chi_max], dtype = complex)
+        for idx in range(d):
+            A_sigma_l_plus_1[idx, :, :] = A_l_plus_1[idx*left_chi_max:(idx+1)*left_chi_max, :] 
+            vprint("B_{}@site {}\n{}".format(idx, l, A_sigma_l_plus_1[idx, :, :]), _verbosity, VLevel.DEBUG)
+        list_M.insert(l, np.copy(A_sigma_l_plus_1))
+
+
+    return list_M, list_rho
 
 
 def random_point_on_the_n_sphere(n, r=1):
@@ -223,3 +296,42 @@ def random_eigenvalues_from_n_sphere(n: int, r=1)-> np.array:
         coordinates = random_point_on_the_n_sphere(n, r)
         return coordinates
         # return np.sort(np.square(coordinates))[::-1]
+
+
+def vector_state_from_mps_v2(list_M: list, list_rho: list, L:int, d=2)->np.array:
+    """
+    Input:
+    list_M (list): list of the matrices M_sigma_l ordered increasingly. The matrices M_sigma_l[l] for l
+    in [1, L/2-1] contained the matrices A_l^{\sigma_l} are stored. The matrices M_sigma_l[l] for l
+    in [L/2, L] contained the matrices B_l^{\sigma_l} are stored.
+    list_rho (list): list of the eigenvalues ordered increasingly.
+    L (int): the number of lattice sites. 
+    d (int): The size of the sigma_l index, the dimension of the qudit.
+    
+    Output:
+    vector_state (np.array): vector_state[sigma_1, sigma_2, ..., sigma_L] holds the desired matrix product
+    """
+    # Initialize vector_state with shape (d, d, ..., d) repeated L times
+    vector_state_shape = (d,) * L
+    vector_state = np.zeros(vector_state_shape, dtype=object)
+    vector_labels = np.zeros(vector_state_shape, dtype=object)
+    sigma_tuples = list(product(range(d), repeat=L))
+    # Iterate over all combinations of sigma_1, sigma_2, ..., sigma_L
+    for sidx, sigma_tuple in enumerate(sigma_tuples):
+        # Initialize product as identity matrix of size (n x n)
+        product_matrix = np.eye(1, dtype="complex")
+
+        # Multiply A_1^{sigma_1} @ A_2^{sigma_2} @ ... @ A_L^{sigma_L}
+        for l, sigma_l in enumerate(sigma_tuple):
+            A = list_M[l]
+            product_matrix = product_matrix @ A[sigma_l, :, :]
+
+        # Assign the result to vector_state at the index sigma_1, ..., sigma_L
+        vector_state[sigma_tuple] = product_matrix
+        vector_labels[sigma_tuple] = sidx
+
+    # Now vector_state[sigma_1, sigma_2, ..., sigma_L] holds the desired matrix product
+    vector_state = vector_state.reshape((d**L))
+    state_flat = np.array([x[0] for x in vector_state])
+    labels_flat = vector_labels.reshape((d**L))
+    return state_flat.reshape(d**L), sigma_tuples, labels_flat
