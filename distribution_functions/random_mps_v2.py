@@ -143,22 +143,19 @@ def produce_random_mps_v2(L: int, chi_max: int, d: int = 2, _verbosity: int = VL
 
         # See my notes to see why the coefficient (d**2) appears.
         C = (d**2)*(X.conj().T) @ (S_l_minus_1**2) @ X
-        
-        if count_below == 0: # C is positive definite.
-            L_lower_tri = np.linalg.cholesky(C)
-        else: # C is not positive definite.
-            L0_lower_tri = np.linalg.cholesky(C)
-            L_lower_tri = np.zeros([left_chi_max, d * right_chi_max])
-            _, r = L0_lower_tri.shape
-            L_lower_tri[:,:r] = L0_lower_tri
+        L_lower_tri = np.linalg.cholesky(C)
+        # if count_below == 0: # C is positive definite.
+        #     L_lower_tri = np.linalg.cholesky(C)
+        # else: # C is not positive definite.
+        #     L0_lower_tri = np.linalg.cholesky(C)
+        #     L_lower_tri = np.zeros([left_chi_max, d * right_chi_max])
+        #     _, r = L0_lower_tri.shape
+        #     L_lower_tri[:,:r] = L0_lower_tri
         # try:
             # L = np.linalg.cholesky(C)   # L is lower-triangular, C = L @ L.conj().T
         # except np.linalg.LinAlgError:
             # Do something
 
-            # L_lower_tri = lowrank_L_padded_with_zeros(C, m= d*right_chi_max, threshold=1e-8)
-        print(f"Expected dimension for l={l}: [left_chi_max, d* right_chi_max]={[left_chi_max, d* right_chi_max]}")
-        print(f"Dimensions {L_lower_tri.shape}")
 
 
         # print(f"L_lower_tri: {L_lower_tri}")
@@ -204,14 +201,14 @@ def produce_random_mps_v2(L: int, chi_max: int, d: int = 2, _verbosity: int = VL
         # See my notes to see why the coefficient (d**2) appears.
         C = (d**2)*X @ (S_l_plus_1**2) @ (X.conj().T)
 
-        
-        if count_below == 0: # C is positive definite.
-            L_lower_tri = np.linalg.cholesky(C)
-        else: # C is not positive definite.
-            L0_lower_tri = np.linalg.cholesky(C)
-            L_lower_tri = np.zeros([left_chi_max, d * right_chi_max])
-            _, r = L0_lower_tri.shape
-            L_lower_tri[:,:r] = L0_lower_tri
+        L_lower_tri = np.linalg.cholesky(C)
+        # if count_below == 0: # C is positive definite.
+        #     L_lower_tri = np.linalg.cholesky(C)
+        # else: # C is not positive definite.
+        #     L0_lower_tri = np.linalg.cholesky(C)
+        #     L_lower_tri = np.zeros([left_chi_max, d * right_chi_max])
+        #     _, r = L0_lower_tri.shape
+        #     L_lower_tri[:,:r] = L0_lower_tri
         # try:
             # L = np.linalg.cholesky(C)   # L is lower-triangular, C = L @ L.conj().T
         # except np.linalg.LinAlgError:
@@ -316,6 +313,7 @@ def vector_state_from_mps_v2(list_M: list, list_rho: list, L:int, d=2)->np.array
     vector_state = np.zeros(vector_state_shape, dtype=object)
     vector_labels = np.zeros(vector_state_shape, dtype=object)
     sigma_tuples = list(product(range(d), repeat=L))
+    rho_middle = np.diag(list_rho[int(L/2+1)])
     # Iterate over all combinations of sigma_1, sigma_2, ..., sigma_L
     for sidx, sigma_tuple in enumerate(sigma_tuples):
         # Initialize product as identity matrix of size (n x n)
@@ -325,6 +323,9 @@ def vector_state_from_mps_v2(list_M: list, list_rho: list, L:int, d=2)->np.array
         for l, sigma_l in enumerate(sigma_tuple):
             A = list_M[l]
             product_matrix = product_matrix @ A[sigma_l, :, :]
+            if l==int(L/2):
+                product_matrix = product_matrix @ rho_middle
+        
 
         # Assign the result to vector_state at the index sigma_1, ..., sigma_L
         vector_state[sigma_tuple] = product_matrix

@@ -1,45 +1,38 @@
 import numpy as np
 import scipy as sp
 from scipy.linalg import svd, eigh
-from distribution_functions.random_mps import vector_state_from_mps
-from distribution_functions.random_mps_v2 import produce_random_mps_v2, VLevel
-from distribution_functions.property_calculation_function import partial_trace_2
+from distribution_functions.random_mps import vector_state_from_mps, produce_random_mps
+from distribution_functions.random_mps_v2 import produce_random_mps_v2, VLevel, vector_state_from_mps_v2
+from distribution_functions.property_calculation_function import partial_trace_2, partial_trace
 from itertools import product
 
-L = 10
+L = 4
 d = 2
 chi_max = 2**L
 # l = 4
 
 # generate random MPS
 list_M, list_rho = produce_random_mps_v2(L, 32, d, VLevel.INFO)
-print(f"list_rho{list_rho}")
-
-vector_state, sigma_tuples, labels_flat = vector_state_from_mps(list_M, L=L, d=d)
+print(f"list_M: {list_M}")
+print(f"list_rho:{list_rho}")
+vector_state, sigma_tuples, labels_flat = vector_state_from_mps_v2(list_M, list_rho, L=L, d=d)
 rho = np.outer(vector_state, np.conjugate(vector_state))
 # dims (list): Dimensions of the subsystems.
 # keep (list): Indices of subsystems to keep after tracing out.
-dims = [2,2]
+
 keep = [0]
+dims = [2,8]
 
 print("sigma tuples: {}".format(sigma_tuples))
-print("labales_flat: {}".format(labels_flat))
+print("labels_flat: {}".format(labels_flat))
 
-#rho_A = partial_trace( rho, dims, keep)
-#U, S, Vh = svd(rho_A, lapack_driver = 'gesvd')
-#print(f"list_rho[0]{list_rho[0]}")
-#print(f"S{S}")
 
 rho_A = partial_trace_2(d, L, rho, sigma_tuples, keep)
 E, V = eigh(rho_A)
-print(f"list_rho[0]{list_rho[0]}")
+print(f"list_rho{list_rho}")
 print(f"E{E}, sum(E)={np.sum(E)}")
 
-# list_M, list_rho = produce_random_mps_v2(L, 32, d, VLevel.INFO)
-# print(f"list_M:{list_M}")
-# # print(f"list_M[-1]:{list_M[-1]}")
-# print(f"list_rho{list_rho}")
-# # test eigenvalue distributions
+# test eigenvalue distributions
 # T = np.array([[1.0]], dtype = complex)
 # for j in range(L):
 
@@ -48,13 +41,13 @@ print(f"E{E}, sum(E)={np.sum(E)}")
 #     Mrho = np.conj(Mfused.T) @ Mfused
 #     T = np.diag(np.sqrt(list_rho[j]))
 
-#     #print(np.vstack((list_rho[j], np.diag(Mrho))))
-#     #print(Mfused)
-#     #print(np.conj(Mfused.T) @ Mfused)
+    #print(np.vstack((list_rho[j], np.diag(Mrho))))
+    #print(Mfused)
+    #print(np.conj(Mfused.T) @ Mfused)
 
-#     #assert np.isclose(np.sum(np.diag(Mrho)), 1.0), "@site {}, np.sum(np.diag(Mrho)) = {}".format(j, np.sum(np.diag(Mrho)))
-#     print("@site {} normalization constraint |np.sum(np.diag(Mrho)) - 1.0| = {}".format(j, abs(np.sum(np.diag(Mrho)) - 1.0)))
-#     # print("@site {} distance |rho_j - S^2_j| = {}, normalization constraint |np.sum(np.diag(Mrho)) - 1.0| = {}".format(j, np.linalg.norm(list_rho[j] - np.diag(T)**2), np.sum(np.diag(Mrho)) - 1.0))
+    #assert np.isclose(np.sum(np.diag(Mrho)), 1.0), "@site {}, np.sum(np.diag(Mrho)) = {}".format(j, np.sum(np.diag(Mrho)))
+    # print("@site {} normalization constraint |np.sum(np.diag(Mrho)) - 1.0| = {}".format(j, abs(np.sum(np.diag(Mrho)) - 1.0)))
+    # print("@site {} distance |rho_j - S^2_j| = {}, normalization constraint |np.sum(np.diag(Mrho)) - 1.0| = {}".format(j, np.linalg.norm(list_rho[j] - np.diag(T)**2), np.sum(np.diag(Mrho)) - 1.0))
 
 
 
@@ -100,35 +93,17 @@ print(f"E{E}, sum(E)={np.sum(E)}")
 # rho = np.outer(vector_state, np.conjugate(vector_state))
 # print(f"rho{rho}")
 # # dims (list): Dimensions of the subsystems. For L=3, one can use dims = [4,2] or dims = [2,4]. 
-# dims = [2,2] 
+# # dims = [2,2] 
 # # keep (list): Indices of subsystems to keep after tracing out.
-# keep = [0] 
+# # keep = [0] 
 # rho_A = partial_trace(rho, dims, keep)
 # print(f"rho_A{rho_A}")
-# # Example: Bell state |Φ+> = (|00> + |11>)/√2
-# # phi_plus = np.array([1, 0, 0, 1]) / np.sqrt(2)
-# # rho = np.outer(phi_plus, phi_plus.conj())
-# # rho_0 = partial_trace(rho, dims, keep)
-# # print(rho_0)
-
-
-# U, S, Vh = svd(rho_A, lapack_driver = 'gesvd')
-# print(f"list_rho[0]{list_rho[0]}")
-# print(f"S{S}")
-
-
-
-# def partial_trace_rho_qubit0(rho):
-#     """
-#     Compute the reduced density matrix of qubit 0
-#     by tracing out qubit 1 from a 2-qubit density matrix (4x4).
-#     """
-#     rho = np.asarray(rho)
-#     if rho.shape != (4, 4):
-#         raise ValueError("Input density matrix must be 4x4 (2 qubits).")
-
-#     # Reshape to 2x2x2x2
-#     rho_reshaped = rho.reshape(2, 2, 2, 2)
-#     # Trace out qubit 1 (the second qubit)
-#     rho_reduced = np.trace(rho_reshaped, axis1=1, axis2=3)
-#     return rho_reduced
+# E, V = eigh(rho_A)
+# print(f"E:{E}")
+# print(f"list_rho{list_rho}")
+# print(f"E{E}, sum(E)={np.sum(E)}")
+# Example: Bell state |Φ+> = (|00> + |11>)/√2
+# phi_plus = np.array([1, 0, 0, 1]) / np.sqrt(2)
+# rho = np.outer(phi_plus, phi_plus.conj())
+# rho_0 = partial_trace(rho, dims, keep)
+# print(rho_0)
