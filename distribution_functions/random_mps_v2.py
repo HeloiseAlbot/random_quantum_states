@@ -167,9 +167,8 @@ def produce_random_mps_v2(L: int, chi_max: int, d: int = 2, _verbosity: int = VL
         #     B_l = diag_s @ X @ L_lower_tri
         # else:
         # See my notes to see why the coefficient (1/d) appears.
-        B_l = (1/d)*np.diag(S_l_minus_1_inv_just_the_diag) @ X @ L_lower_tri 
-
- 
+        B_l = (1/d)*np.diag(S_l_minus_1_inv_just_the_diag) @ X @ L_lower_tri
+        assert is_unitary(B_l), "Matrix is not unitary: A†A deviates from identity." 
 
         # now decompose B_l_minus_1 to get actual site tensors
         B_sigma_l = np.zeros([d, left_chi_max, right_chi_max], dtype = complex)
@@ -213,10 +212,7 @@ def produce_random_mps_v2(L: int, chi_max: int, d: int = 2, _verbosity: int = VL
             # L = np.linalg.cholesky(C)   # L is lower-triangular, C = L @ L.conj().T
         # except np.linalg.LinAlgError:
             # Do something
-
             # L_lower_tri = lowrank_L_padded_with_zeros(C, m= d*right_chi_max, threshold=1e-8)
-        print(f"Expected dimension for l={l}: [right_chi_max, d*left_chi_max ]={[right_chi_max, d* left_chi_max]}")
-        print(f"Dimensions {L_lower_tri.shape}")
 
 
         # print(f"L_lower_tri: {L_lower_tri}")
@@ -229,7 +225,7 @@ def produce_random_mps_v2(L: int, chi_max: int, d: int = 2, _verbosity: int = VL
         # else:
         # See my notes to see why the coefficient (1/d) appears.
         A_l_plus_1 = (1/d)*((L_lower_tri.conj().T)) @ X @ np.diag(S_l_plus_1_inv_just_the_diag) 
-        print(f"dim A_l_plus_1:{A_l_plus_1.shape}") 
+        assert is_unitary(A_l_plus_1), "Matrix is not unitary: A†A deviates from identity."
 
  
 
@@ -324,7 +320,8 @@ def vector_state_from_mps_v2(list_M: list, list_rho: list, L:int, d=2)->np.array
             A = list_M[l]
             product_matrix = product_matrix @ A[sigma_l, :, :]
             if l==int(L/2):
-                product_matrix = product_matrix @ rho_middle
+                # Eq. (53) of The DMRG in the age of MPS by US. 
+                product_matrix = product_matrix @ np.sqrt(rho_middle)
         
 
         # Assign the result to vector_state at the index sigma_1, ..., sigma_L
@@ -336,3 +333,9 @@ def vector_state_from_mps_v2(list_M: list, list_rho: list, L:int, d=2)->np.array
     state_flat = np.array([x[0] for x in vector_state])
     labels_flat = vector_labels.reshape((d**L))
     return state_flat.reshape(d**L), sigma_tuples, labels_flat
+
+def is_unitary(A, tol=1e-10):
+    A = np.asarray(A)
+    I = np.eye(A.shape[0])
+    return np.allclose(A.conj().T @ A, I, atol=tol) and \
+           np.allclose(A @ A.conj().T, I, atol=tol)
