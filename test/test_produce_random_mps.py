@@ -2,7 +2,7 @@ import numpy as np
 import scipy as sp
 from scipy.linalg import svd, eigh
 from distribution_functions.random_mps import vector_state_from_mps, produce_random_mps
-from distribution_functions.random_mps_v2 import produce_random_mps_v2, VLevel, vector_state_from_mps_v2
+from distribution_functions.random_mps_v2 import produce_random_mps_v2, VLevel, vector_state_from_mps_v2, draw_random_mps
 from distribution_functions.property_calculation_function import partial_trace_2, partial_trace
 from itertools import product
 
@@ -12,25 +12,23 @@ chi_max = 2**L
 # l = 4
 
 # generate random MPS
-list_M, list_rho = produce_random_mps_v2(L, 32, d, VLevel.INFO)
-print(f"list_M: {list_M}")
-print(f"list_rho:{list_rho}")
-vector_state, sigma_tuples, labels_flat = vector_state_from_mps_v2(list_M, list_rho, L=L, d=d)
+list_M, list_rho = draw_random_mps(L, 32, d, VLevel.INFO)
+# print(f"list_M: {list_M}")
+# print(f"list_rho:{list_rho}")
+vector_state, sigma_tuples, labels_flat = vector_state_from_mps(list_M, L=L, d=d)
 rho = np.outer(vector_state, np.conjugate(vector_state))
-# dims (list): Dimensions of the subsystems.
 # keep (list): Indices of subsystems to keep after tracing out.
 
-keep = [0]
-dims = [2,8]
+for idx in range(L-1):
 
-print("sigma tuples: {}".format(sigma_tuples))
-print("labels_flat: {}".format(labels_flat))
+    keep = np.arange(idx+1)
+    rho_A = partial_trace_2(d, L, rho, sigma_tuples, keep)
+    E, V = eigh(rho_A)
+    E = np.sort(E)[::-1][:len(list_rho[idx])]
 
-
-rho_A = partial_trace_2(d, L, rho, sigma_tuples, keep)
-E, V = eigh(rho_A)
-print(f"list_rho{list_rho}")
-print(f"E{E}, sum(E)={np.sum(E)}")
+    print("rho_expected: {}, rho_actual: {}".format(list_rho[idx], E))
+    print("||rho_expected - rho_actual|| = {}".format(np.linalg.norm(E - list_rho[idx])))
+    print(f"E{E}, sum(E)={np.sum(E)}")
 
 # test eigenvalue distributions
 # T = np.array([[1.0]], dtype = complex)

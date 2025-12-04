@@ -3,7 +3,7 @@ import math
 
 from scipy.optimize import root
 from scipy.optimize import minimize
-from scipy.linalg import block_diag, eigh, svd
+from scipy.linalg import block_diag, eigh, svd, cholesky, solve_triangular
 from scipy.stats import unitary_group, norm
 from itertools import product
 from enum import Enum
@@ -239,6 +239,130 @@ def produce_random_mps_v2(L: int, chi_max: int, d: int = 2, _verbosity: int = VL
 
     return list_M, list_rho
 
+def draw_random_mps(length: int, chi_max: int, d: int = 2, _verbosity: int = VLevel.INFO):
+
+
+    """
+    Input:
+    length (int): the number of sites in the chain.
+    chi_max (int): the bond dimension of the MPS.
+    d (int): the dimension of the local Hilbert space.
+
+    Return:
+    """
+
+    def get_max_bond_dim(l: int):
+        """
+            l counts the bonds starting from the left
+        """
+        return min(chi_max, np.power(d, l) if l < length/2 else np.power(d, length-l))
+
+    def truncate(_S, _threshold):
+        """
+        Return: a copy of the singular value matrix matrix _S where the entries which are smaller than _threshold are set to 0. 
+        """
+        S = np.copy(_S)
+        S[S < _threshold] = 0.0
+        
+        return S / np.sqrt(np.sum(S**2))
+
+    def pseudo_inverse_diag(_S, _threshold):
+        return np.array([1.0 / s if s > _threshold else 0.0 for s in _S])
+
+    def check_majorization(_S1, _S2):
+        """
+        Returns true if _S2 majorizes _S1
+        """
+
+        if isinstance(_S1, np.ndarray):
+            assert len(_S1.shape) == 1
+        if isinstance(_S2, np.ndarray):
+            assert len(_S2.shape) == 1
+
+        max_len = len(_S1)
+        summed_S1 = np.cumsum(np.sort(_S1)[::-1][:max_len]**2)
+        summed_S2 = np.cumsum(np.sort(_S2)[::-1][:max_len]**2)
+
+        return np.all(summed_S1 <= summed_S2)
+
+    threshold = 1e-08
+    prev_S = np.array([1.0])
+    prev_V = np.array([[1.0]])
+    list_M = list()
+    list_rho = list()
+
+    for l in range(length):
+
+        left_chi_max = get_max_bond_dim(l)
+        right_chi_max = get_max_bond_dim(l+1)
+
+        vprint("Sampling MPS tensor M@{}, dim(M_{}) = {} x {}".format(l, l, left_chi_max, right_chi_max), _verbosity, VLevel.INFO)
+
+        if l < length-1:
+
+            '''
+            We sample Q with dim (d*left_chi_max, d*left_chi_max)
+            '''
+            Q = random_unitary_matrix(d*left_chi_max)[:,:right_chi_max]
+            assert np.isclose(np.linalg.norm(np.eye(Q.shape[1]) - np.conj(Q.T)@Q), 0.0)
+
+            # Get next Schmidt-value distribution ensuring majorization constraint
+            success = False
+            max_tries = 1024
+            max_spectrum = np.kron(prev_S, np.ones(d))
+            for idx in range(max_tries):
+                next_S = truncate(np.sort(np.abs(random_eigenvalues_from_n_sphere(right_chi_max)))[::-1], threshold)
+                if check_majorization(next_S, max_spectrum):
+                    success = True
+                    break
+
+            if not(success):
+                raise ValueError("Failure satisfying majorization criterion for sampled Schmidt values after {} attempts".format(max_tries))
+            else:
+                vprint("After {} iterations found next set of singular values satisfying majorization constraint".format(idx), _verbosity, VLevel.INFO)
+
+            rho = next_S**2
+            assert np.isclose(np.sum(rho), 1.0), "Normalization constraint violated for Schmidt value distribution, |np.sum(S**2)| = {}".format(np.sum(rho))
+            list_rho.append(rho)
+
+            # construct X = ΣWQ and compute SVD
+            SigmaW = np.kron(np.eye(d), np.diag(prev_S) @ prev_V)
+            w,s,zh = svd(SigmaW @ Q)
+
+            # Now evaluate eigenvalue decomposition of z^+ s^{-1} next_S^2 s^{-1} z 
+            S = np.conj(zh).T @ np.diag((next_S * pseudo_inverse_diag(s,1e-08))**2) @ zh
+            E, V = eigh(S)
+            R = V @ np.diag(np.sqrt(E)) @ np.conj(V.T)
+
+            # and construct M
+            M = Q @ R
+
+            # compute right basis trafo to be passed to next site and check singular values
+            u,s,next_V = svd(SigmaW @ M)
+            assert np.isclose(np.linalg.norm(np.sort(s) - np.sort(next_S)), 0.0, rtol = 1e-08)
+
+            # construct and decompose site tensor
+            M_l = np.zeros([d, left_chi_max, right_chi_max], dtype = complex)
+            for idx in range(d):
+                M_l[idx, :, :] = M[idx*left_chi_max:(idx+1)*left_chi_max,:]
+                vprint("M_{}@site {}\n{}".format(idx, l, M_l[idx, :, :]), _verbosity, VLevel.DEBUG)
+
+            prev_S = next_S
+            prev_V = next_V
+
+        else:
+
+            V = random_unitary_matrix(d*right_chi_max)[:left_chi_max,:]
+            assert np.isclose(np.linalg.norm(np.eye(V.shape[0]) - V@np.conj(V.T)), 0.0)
+
+            M_l = np.zeros([d, left_chi_max, right_chi_max], dtype = complex)
+            for idx in range(d):
+                M_l[idx, :, :] = V[:,idx*right_chi_max:(idx+1)*right_chi_max]
+                vprint("M_{}@site {}\n{}".format(idx, l, M_l[idx, :, :]), _verbosity, VLevel.DEBUG)
+
+        list_M.append(np.copy(M_l))
+
+    return list_M, list_rho
 
 def random_point_on_the_n_sphere(n, r=1):
     # Step 1: Generate the random angles
