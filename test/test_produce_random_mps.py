@@ -6,7 +6,7 @@ from distribution_functions.random_mps_v2 import produce_random_mps_v2, VLevel, 
 from distribution_functions.property_calculation_function import partial_trace_2, partial_trace
 from itertools import product
 
-L = 4
+L = 10
 d = 2
 chi_max = 2**L
 # l = 4
