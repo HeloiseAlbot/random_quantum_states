@@ -426,7 +426,6 @@ def iterative_solve_mps(list_M: list, list_rho: list, maxit: int = 100, eps: flo
 
         # flip sweep direction
         right_sweep = not(right_sweep)
-        vprint("Executing {} sweep".format("right" if right_sweep else "left"), _verbosity, VLevel.DEBUG)
 
         for i in range(n_sites-1):
 
