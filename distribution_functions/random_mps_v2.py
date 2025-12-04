@@ -331,7 +331,8 @@ def draw_random_mps(length: int, chi_max: int, d: int = 2, _verbosity: int = VLe
 
             # Now evaluate eigenvalue decomposition of z^+ s^{-1} next_S^2 s^{-1} z 
             S = np.conj(zh).T @ np.diag((next_S * pseudo_inverse_diag(s,1e-08))**2) @ zh
-            E, V = eigh(S)
+            E, V = eigh((S + np.conj(S).T)/2.0)
+            E[E<0] = 0.0
             R = V @ np.diag(np.sqrt(E)) @ np.conj(V.T)
 
             # and construct M
