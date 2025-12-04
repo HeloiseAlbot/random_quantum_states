@@ -364,6 +364,94 @@ def draw_random_mps(length: int, chi_max: int, d: int = 2, _verbosity: int = VLe
 
     return list_M, list_rho
 
+def iterative_solve_mps(list_M: list, list_rho: list, maxit: int = 100, eps: float = 1e-06, _verbosity: int = VLevel.INFO):
+
+    def fuse(M_l: np.ndarray, right_sweep: bool):
+
+        d = M_l.shape[0]
+        left_bdim = M_l.shape[1]
+        right_bdim = M_l.shape[2]
+
+        if right_sweep:
+            result = np.zeros([d * left_bdim, right_bdim], dtype = complex)
+            for s in range(d):
+                result[s*left_bdim:(s+1)*left_bdim,:] = np.copy(M_l[s,:,:])
+        else:
+            result = np.zeros([left_bdim, d*right_bdim], dtype = complex)
+            for s in range(d):
+                result[:,s*right_bdim:(s+1)*right_bdim] = np.copy(M_l[s,:,:])
+
+        return result
+
+    def split(M: np.ndarray, d: int, left_bdim: int, right_bdim: int, right_sweep: bool):
+
+        result = np.zeros([d, left_bdim, right_bdim], dtype = complex)
+        for s in range(d):
+            if right_sweep:
+                result[s,:,:] = np.copy(M[s*left_bdim:(s+1)*left_bdim,:])
+            else:
+                result[s,:,:] = np.copy(M[:,s*right_bdim:(s+1)*right_bdim])
+
+        return result
+
+    def absorb(M_l: np.ndarray, t: np.ndarray, right_sweep: bool):
+
+        d = M_l.shape[0]
+
+        result = np.zeros(M_l.shape, dtype = complex)
+        for s in range(d):
+            if right_sweep:
+                result[s,:,:] = t @ M_l[s,:,:]
+            else:
+                result[s,:,:] = M_l[s,:,:] @ t
+
+        return result
+
+    n_sites = len(list_M)
+    curr_it = 0
+    list_S = [np.sort(np.sqrt(evs))[::-1] for evs in list_rho]
+    list_errors = []
+
+    # do a warmup sweep to bring mps into mixed-canonical form with orthogonality center at last site
+    right_sweep = True
+    for i in range(n_sites-1):
+
+        u,s,v = svd(fuse(list_M[i], right_sweep), full_matrices = False)
+        list_M[i] = split(u, *list_M[i].shape, right_sweep)
+        list_M[i+1] = absorb(list_M[i+1], np.diag(s)@v, right_sweep)
+
+    while (curr_it < maxit) and ((len(list_errors) == 0) or (list_errors[-1] > eps)):
+
+        s_errors = []
+
+        # flip sweep direction
+        right_sweep = not(right_sweep)
+        vprint("Executing {} sweep".format("right" if right_sweep else "left"), _verbosity, VLevel.DEBUG)
+
+        for i in range(n_sites-1):
+
+            site_idx = i if right_sweep else n_sites - i - 1
+            bond_idx = site_idx if right_sweep else site_idx - 1
+
+            u,s,v = svd(fuse(list_M[site_idx], right_sweep), full_matrices = False)
+
+            if right_sweep:
+                list_M[site_idx] = split(u, *list_M[site_idx].shape, right_sweep)
+                list_M[site_idx+1] = absorb(list_M[site_idx+1], np.diag(list_S[bond_idx])@v, right_sweep)
+            else:
+                list_M[site_idx] = split(v, *list_M[site_idx].shape, right_sweep)
+                list_M[site_idx-1] = absorb(list_M[site_idx-1], u @ np.diag(list_S[bond_idx]), right_sweep)
+
+            s_errors.append(np.linalg.norm(np.sort(s)[::-1] - list_S[bond_idx]))
+
+        list_errors.append(np.linalg.norm(s_errors))
+        vprint("it = {}, ||δS|| = {}".format(curr_it, list_errors[-1]), _verbosity, VLevel.DEBUG)
+
+        # increase counter
+        curr_it += 1
+
+    return list_M, list_errors
+
 def random_point_on_the_n_sphere(n, r=1):
     # Step 1: Generate the random angles
     angles = np.zeros(n-1)

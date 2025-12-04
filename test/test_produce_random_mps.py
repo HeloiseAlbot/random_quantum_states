@@ -2,7 +2,7 @@ import numpy as np
 import scipy as sp
 from scipy.linalg import svd, eigh
 from distribution_functions.random_mps import vector_state_from_mps, produce_random_mps
-from distribution_functions.random_mps_v2 import produce_random_mps_v2, VLevel, vector_state_from_mps_v2, draw_random_mps
+from distribution_functions.random_mps_v2 import produce_random_mps_v2, VLevel, vector_state_from_mps_v2, draw_random_mps, iterative_solve_mps
 from distribution_functions.property_calculation_function import partial_trace_2, partial_trace
 from itertools import product
 
@@ -13,22 +13,25 @@ chi_max = 2**L
 
 # generate random MPS
 list_M, list_rho = draw_random_mps(L, 32, d, VLevel.INFO)
+
+list_M, list_errors = iterative_solve_mps(list_M, list_rho, _verbosity = VLevel.DEBUG)
+
 # print(f"list_M: {list_M}")
 # print(f"list_rho:{list_rho}")
-vector_state, sigma_tuples, labels_flat = vector_state_from_mps(list_M, L=L, d=d)
-rho = np.outer(vector_state, np.conjugate(vector_state))
+# vector_state, sigma_tuples, labels_flat = vector_state_from_mps(list_M, L=L, d=d)
+# rho = np.outer(vector_state, np.conjugate(vector_state))
 # keep (list): Indices of subsystems to keep after tracing out.
 
-for idx in range(L-1):
+# for idx in range(L-1):
 
-    keep = np.arange(idx+1)
-    rho_A = partial_trace_2(d, L, rho, sigma_tuples, keep)
-    E, V = eigh(rho_A)
-    E = np.sort(E)[::-1][:len(list_rho[idx])]
+#     keep = np.arange(idx+1)
+#     rho_A = partial_trace_2(d, L, rho, sigma_tuples, keep)
+#     E, V = eigh(rho_A)
+#     E = np.sort(E)[::-1][:len(list_rho[idx])]
 
-    print("rho_expected: {}, rho_actual: {}".format(list_rho[idx], E))
-    print("||rho_expected - rho_actual|| = {}".format(np.linalg.norm(E - list_rho[idx])))
-    print(f"E{E}, sum(E)={np.sum(E)}")
+#     print("rho_expected: {}, rho_actual: {}".format(list_rho[idx], E))
+#     print("||rho_expected - rho_actual|| = {}".format(np.linalg.norm(E - list_rho[idx])))
+#     print(f"E{E}, sum(E)={np.sum(E)}")
 
 # test eigenvalue distributions
 # T = np.array([[1.0]], dtype = complex)
