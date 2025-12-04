@@ -6,13 +6,13 @@ from distribution_functions.random_mps_v2 import produce_random_mps_v2, VLevel, 
 from distribution_functions.property_calculation_function import partial_trace_2, partial_trace
 from itertools import product
 
-L = 10
+L = 6
 d = 2
-chi_max = 2**L
+chi_max = 16
 # l = 4
 
 # generate random MPS
-list_M, list_rho = draw_random_mps(L, 32, d, VLevel.INFO)
+list_M, list_rho = draw_random_mps(L, chi_max, d, VLevel.INFO)
 
 list_M, list_errors = iterative_solve_mps(list_M, list_rho, _verbosity = VLevel.DEBUG)
 

@@ -308,7 +308,7 @@ def draw_random_mps(length: int, chi_max: int, d: int = 2, _verbosity: int = VLe
 
             # Get next Schmidt-value distribution ensuring majorization constraint
             success = False
-            max_tries = 1024
+            max_tries = 2048
             max_spectrum = np.kron(prev_S, np.ones(d))
             for idx in range(max_tries):
                 next_S = truncate(np.sort(np.abs(random_eigenvalues_from_n_sphere(right_chi_max)))[::-1], threshold)
