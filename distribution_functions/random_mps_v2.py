@@ -239,9 +239,7 @@ def produce_random_mps_v2(L: int, chi_max: int, d: int = 2, _verbosity: int = VL
 
     return list_M, list_rho
 
-def draw_random_mps(length: int, chi_max: int, d: int = 2, _verbosity: int = VLevel.INFO):
-
-
+def draw_random_mps(length: int, chi_max: int, d: int = 2, standard_deviation: int = None, _verbosity: int = VLevel.INFO):
     """
     Input:
     length (int): the number of sites in the chain.
@@ -291,6 +289,14 @@ def draw_random_mps(length: int, chi_max: int, d: int = 2, _verbosity: int = VLe
     list_M = list()
     list_rho = list()
 
+    if standard_deviation is None:
+        function_eigenvalues = random_eigenvalues_from_n_sphere
+    else:
+        def function_eigenvalues(_right_chi_max):
+            angles_center_l = generate_angle_maximally_entangled_eigenvalues(_right_chi_max)
+            _eigenvalues = gaussian_point_on_the_n_sphere_in_a_disk(_right_chi_max, standard_deviation, angles_center_l, r=1)
+            return _eigenvalues
+
     for l in range(length):
 
         left_chi_max = get_max_bond_dim(l)
@@ -311,7 +317,7 @@ def draw_random_mps(length: int, chi_max: int, d: int = 2, _verbosity: int = VLe
             max_tries = 2048
             max_spectrum = np.kron(prev_S, np.ones(d))
             for idx in range(max_tries):
-                next_S = truncate(np.sort(np.abs(random_eigenvalues_from_n_sphere(right_chi_max)))[::-1], threshold)
+                next_S = truncate(np.sort(np.abs(function_eigenvalues(right_chi_max)))[::-1], threshold)
                 if check_majorization(next_S, max_spectrum):
                     success = True
                     break
@@ -452,7 +458,7 @@ def iterative_solve_mps(list_M: list, list_rho: list, maxit: int = 100, eps: flo
 
     return list_M, list_errors
 
-def random_point_on_the_n_sphere(n, r=1):
+def random_point_on_the_n_sphere(n, r=1): 
     # Step 1: Generate the random angles
     angles = np.zeros(n-1)
     angles[:-1] = np.random.uniform(0, np.pi, n - 2)   # φ1, φ2, ..., φ_{n-2} in [0, π]
@@ -551,3 +557,61 @@ def is_unitary(A, tol=1e-10):
     I = np.eye(A.shape[0])
     return np.allclose(A.conj().T @ A, I, atol=tol) and \
            np.allclose(A @ A.conj().T, I, atol=tol)
+
+def generate_angle_maximally_entangled_eigenvalues(n: int)-> np.array:
+    """
+    Generate the spherical coordinates corresponding to the Cartesian coordinates given by 
+    (1/\sqrt{n},...,1/\sqrt{n}).
+    
+    Return:
+    phi_i (np.array of shape (n-1)): array of angles (in radian).
+    """
+    phi_i = np.arccos([1/math.sqrt(n+1-i) for i in range(1,n)])
+    return phi_i
+
+
+def gaussian_point_on_the_n_sphere_in_a_disk(n: int, standard_deviation: float, angles_center: np.array, r: float=1):
+    """
+    Input:
+    n (int): dimension of the space of the n-sphere. We should have angles_center.size = n-1. 
+    standard_deviation (float): the standard deviation of the Gaussian distribution (in radian). 
+                    We DO NOT place the simulation in the positive orthant. 
+                    Then, in order to keep a uniform distribution on the disk of the n-sphere we should have: 
+                    epsilon_over_2 > math.asin(1/math.sqrt(n)), hence the ValueError line. 
+    angles_center (np.array): coordinates of the point with is the center of the disk in which are taken 
+                    the random point. By default, it will be the point giving the maximally mixed states. 
+    r (float): rayon of the n-sphere. By default, 1.
+
+    Output: 
+    new_coordinates (np.array): A random point distributed as a Gaussian around the point whose coordinates 
+                    are angles_center with standard deviation standard_deviation. The point is given via its 
+                    Cartesian coordinates. 
+    """
+    if angles_center.size != n-1:
+        raise ValueError(f"The input array angles_center must be of size n-1.")
+
+    # if rayon_disk > min(math.asin(1/math.sqrt(n)), np.pi/4):
+    #     raise ValueError(f"The input value diameter_disk must be smaller than {2*math.asin(1/math.sqrt(n))} and pi/2")
+    # Generate the coordinates of the maximal
+    if angles_center is None:
+        print("Angles center is None")
+        angles_center = generate_angle_maximally_entangled_eigenvalues(n)
+    # Step 1: Generate the random angles
+    delta_angles =  np.random.normal(0, standard_deviation, n-1)    
+    # Step 2: Compute x1, x2, ..., xn
+    new_angles = angles_center + delta_angles
+    new_coordinates = np.zeros(n)
+    product_sin = 1  # Initialize the cumulative product of sin terms
+    for i in range(n - 1):
+        if i > 0:
+            product_sin *= np.sin(new_angles[i - 1])
+        new_coordinates[i] = r * product_sin * np.cos(new_angles[i])
+    # Last coordinate xn with full product of sines
+    if n == 1:
+        new_coordinates[-1] = r * product_sin
+    else:
+        new_coordinates[-1] = r * product_sin * np.sin(new_angles[-1])
+    return new_coordinates
+
+
+
