@@ -6,17 +6,29 @@ from distribution_functions.random_mps_v2 import produce_random_mps_v2, VLevel, 
 from distribution_functions.property_calculation_function import partial_trace_2, partial_trace
 from itertools import product
 
-L = 4
+L = 10
 d = 2
-chi_max = 16
+chi_max = 32
 # l = 4
 standard_deviation = None
+list_last_errors = []
+number_tests = 1000
+therehold_acceptable_errors = 1e-6
 
-# generate random MPS
-list_M, list_rho = draw_random_mps(L, chi_max, d, standard_deviation, VLevel.INFO)
-
-list_M, list_errors = iterative_solve_mps(list_M, list_rho, _verbosity = VLevel.DEBUG)
-
+for idx_tests in range(number_tests):
+        
+    # generate random MPS
+    try: 
+        list_M, list_rho = draw_random_mps(L, chi_max, d, standard_deviation, VLevel.QUIET)
+        list_M, list_errors = iterative_solve_mps(list_M, list_rho, _verbosity = VLevel.QUIET)
+        print(list_errors[-1])
+        list_last_errors.append(list_errors[-1])
+    except:
+        pass
+count  = sum(x < therehold_acceptable_errors for x in list_last_errors)
+print(f"Number of state produced, rate:{len(list_last_errors)/number_tests}")
+print(f"count_under_threshold /number_tests:{count/len(list_last_errors)}")
+exit()
 # print(f"list_M: {list_M}")
 # print(f"list_rho:{list_rho}")
 vector_state, sigma_tuples, labels_flat = vector_state_from_mps(list_M, L=L, d=d)

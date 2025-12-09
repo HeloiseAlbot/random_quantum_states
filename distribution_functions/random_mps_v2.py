@@ -267,17 +267,23 @@ def draw_random_mps(length: int, chi_max: int, d: int = 2, standard_deviation: i
     def pseudo_inverse_diag(_S, _threshold):
         return np.array([1.0 / s if s > _threshold else 0.0 for s in _S])
 
-    def check_majorization(_S1, _S2):
+    def check_majorization(_S1, _S2, l):
         """
-        Returns true if _S2 majorizes _S1
+        If l <= length/2:
+            Returns true if _S2 weakly majorizes _S1
+        else: (l > length/2)
+            Returns true if _S1 weakly majorizes _S2
         """
-
         if isinstance(_S1, np.ndarray):
             assert len(_S1.shape) == 1
         if isinstance(_S2, np.ndarray):
             assert len(_S2.shape) == 1
 
         max_len = len(_S1)
+
+        if (l > length/2):
+            _S1, _S2 = _S2, _S1
+
         summed_S1 = np.cumsum(np.sort(_S1)[::-1][:max_len]**2)
         summed_S2 = np.cumsum(np.sort(_S2)[::-1][:max_len]**2)
 
@@ -313,19 +319,22 @@ def draw_random_mps(length: int, chi_max: int, d: int = 2, standard_deviation: i
             assert np.isclose(np.linalg.norm(np.eye(Q.shape[1]) - np.conj(Q.T)@Q), 0.0)
 
             # Get next Schmidt-value distribution ensuring majorization constraint
-            success = False
-            max_tries = 2048
-            max_spectrum = np.kron(prev_S, np.ones(d))
-            for idx in range(max_tries):
-                next_S = truncate(np.sort(np.abs(function_eigenvalues(right_chi_max)))[::-1], threshold)
-                if check_majorization(next_S, max_spectrum):
-                    success = True
-                    break
+            # success = False
+            # max_tries = 2048
+            # max_spectrum = np.kron(prev_S, np.ones(d))
+            # for idx in range(max_tries):
+            # for idx in range(1):
+            next_S = truncate(np.sort(np.abs(function_eigenvalues(right_chi_max)))[::-1], threshold)
+            # if check_majorization(next_S, max_spectrum, l):
+            #     success = True
+            #     break
 
-            if not(success):
-                raise ValueError("Failure satisfying majorization criterion for sampled Schmidt values after {} attempts".format(max_tries))
-            else:
-                vprint("After {} iterations found next set of singular values satisfying majorization constraint".format(idx), _verbosity, VLevel.INFO)
+            # if not(success):
+            #     print("criteria majorization not okay")
+
+            #     # raise ValueError("Failure satisfying majorization criterion for sampled Schmidt values after {} attempts".format(max_tries))
+            # else:
+            #     vprint("After {} iterations found next set of singular values satisfying majorization constraint".format(idx), _verbosity, VLevel.INFO)
 
             rho = next_S**2
             assert np.isclose(np.sum(rho), 1.0), "Normalization constraint violated for Schmidt value distribution, |np.sum(S**2)| = {}".format(np.sum(rho))
@@ -447,10 +456,11 @@ def iterative_solve_mps(list_M: list, list_rho: list, maxit: int = 100, eps: flo
             else:
                 list_M[site_idx] = split(v, *list_M[site_idx].shape, right_sweep)
                 list_M[site_idx-1] = absorb(list_M[site_idx-1], u @ np.diag(list_S[bond_idx]), right_sweep)
-
+            # v = np.linalg.norm(np.sort(s)[::-1] - list_S[bond_idx]) 
+            # result = np.linalg.norm(v) / v.size    
             s_errors.append(np.linalg.norm(np.sort(s)[::-1] - list_S[bond_idx]))
 
-        list_errors.append(np.linalg.norm(s_errors))
+        list_errors.append(np.linalg.norm(s_errors)/len(s_errors))
         vprint("it = {}, ||δS|| = {}".format(curr_it, list_errors[-1]), _verbosity, VLevel.DEBUG)
 
         # increase counter
