@@ -1,7 +1,7 @@
 import numpy as np
 import sys
 import matplotlib.pyplot as plt
-import seaborn as sns
+# import seaborn as sns
 from scipy.stats import linregress
 
 from distribution_functions.random_mps import random_eigenvalues_from_n_sphere
@@ -22,7 +22,9 @@ lambda_avg = np.mean(lambda_values, axis=0)
 plt.figure(figsize=(8, 5))
 plt.plot(range(1, n + 1), lambda_avg, marker='o', linestyle='-', label='Average $\lambda_i$')
 plt.xlabel("Index i", fontsize=20)
-plt.ylabel(r"$\mathrm{E}[\lambda_i]$", fontsize=20)
+plt.ylabel(r"$\mathbb{E}_\sigma[\lambda_i]$", fontsize=20)
+plt.xticks(fontsize=12)
+plt.yticks(fontsize=12)
 plt.yscale("log")  # Set logarithmic scale for lambda values
 # plt.title(f"Average of sorted $\lambda_i$ over {n_simulations} Simulations")
 # plt.legend()
@@ -76,7 +78,15 @@ plt.grid()
 # # ax.tick_params(top=True, right=True)
 # plt.show()
 
+np.savetxt(
+    f"lambda_plot_reglin_whole_orthant_n{n}_logscale.txt",
+    np.column_stack((range(1, n + 1), lambda_avg))
+    # fmt="%.8f",
+    # header="x sin(x) cos(x)",
+    # comments=""
+)
 
 # Save the plot in the same directory as this script
-plt.savefig(f"lambda_plot_reglin_whole_orthant_n{n}_logscale.png")
+plt.savefig(f"lambda_plot_reglin_whole_orthant_n{n}_logscale.pdf", format="pdf", bbox_inches="tight")
+# plt.savefig(f"lambda_plot_reglin_whole_orthant_n{n}_logscale.png")
 plt.show()

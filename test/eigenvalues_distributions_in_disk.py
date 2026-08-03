@@ -141,4 +141,3 @@ plt.figtext(0.5, -0.05,
 plt.tight_layout()
 plt.savefig(f"sebastian_plot_diameter_disk_more_precised_n{n}.png", bbox_inches='tight')
 plt.show()
-

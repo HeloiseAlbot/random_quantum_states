@@ -1,7 +1,5 @@
 import numpy as np
 from scipy.stats import unitary_group
-from scipy.linalg import eigh
-import sys 
 
 def Haar_measure_random_state(N: int)-> np.ndarray:
     """

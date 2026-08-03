@@ -3,6 +3,9 @@
 *.png
 *.npy
 *.npz
+*.json
+*.txt
+*.pdf
 # Ignore Python virtual environments
 .venv/
 

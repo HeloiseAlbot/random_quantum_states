@@ -1,33 +1,82 @@
 import numpy as np
 import scipy as sp
+import sys 
+import json
 from scipy.linalg import svd, eigh
-from distribution_functions.random_mps import vector_state_from_mps, produce_random_mps
+# from distribution_functions.random_mps import vector_state_from_mps, produce_random_mps
 from distribution_functions.random_mps_v2 import produce_random_mps_v2, VLevel, vector_state_from_mps_v2, draw_random_mps, iterative_solve_mps
 from distribution_functions.property_calculation_function import partial_trace_2, partial_trace
 from itertools import product
 
-L = 10
-d = 2
-chi_max = 32
-# l = 4
+# sys.argv = [name_of_the_program, standard_deviation, L, chi_max]
+# print("sys.argv:{}".format(sys.argv))
+# standard_deviation = float(sys.argv[1])
 standard_deviation = None
+L = int(sys.argv[2])
+chi_max = int(sys.argv[3])
+number_tests = int(sys.argv[4])
+d = 2
+# number_tests = 1000
+# therehold_acceptable_errors = 1e-6
 list_last_errors = []
-number_tests = 1000
-therehold_acceptable_errors = 1e-6
-
+list_of_list_M = []
+list_of_list_rho = []
+list_of_list_errors = []
 for idx_tests in range(number_tests):
         
     # generate random MPS
     try: 
         list_M, list_rho = draw_random_mps(L, chi_max, d, standard_deviation, VLevel.QUIET)
         list_M, list_errors = iterative_solve_mps(list_M, list_rho, _verbosity = VLevel.QUIET)
-        print(list_errors[-1])
+        # Store the data
         list_last_errors.append(list_errors[-1])
+        list_of_list_M.append(list_M)
+        list_of_list_rho.append(list_rho)
+        list_of_list_errors.append(list_errors)
+        print(f"list_errors[-1]:{list_errors[-1]}")
     except:
         pass
-count  = sum(x < therehold_acceptable_errors for x in list_last_errors)
-print(f"Number of state produced, rate:{len(list_last_errors)/number_tests}")
-print(f"count_under_threshold /number_tests:{count/len(list_last_errors)}")
+# count  = sum(x < therehold_acceptable_errors for x in list_last_errors)
+# print(f"Number of state produced, rate:{len(list_last_errors)/number_tests}")
+# print(f"count_under_threshold/number_tests:{count/len(list_last_errors)}")
+
+# File of parameters
+params = {
+    "Lattice parameters": {
+        "L": L,
+        "d": d,
+        "chi_max": chi_max,
+    },
+    "Random simulations parameters": {
+        "Standard deviation": standard_deviation
+    },
+    "Simulation": {
+        "Number of tests": number_tests
+    }
+}
+
+# Save to params.json in a nicely formatted human-readable layout
+with open(f"new_parameters_L{L}_standard_deviation{standard_deviation}_chi_max{chi_max}_number_tests{number_tests}.json", "w") as f:
+    json.dump(params, f, indent=4)  # indent makes it human-readable
+
+# np.savez(
+#     f"simulation_data_L{L}_std{standard_deviation}_chi{chi_max}.npz",
+#     list_M=list_of_list_M,
+#     list_rho=list_of_list_rho,
+#     list_errors=list_of_list_errors,
+#     list_last_errors=list_last_errors)
+# list_M_file = f"list_of_list_M_L{L}_standard_deviation{standard_deviation}_chi_max{chi_max}.npy"
+# np.save(list_M_file, np.array(list_of_list_M, dtype=object), allow_pickle=True)
+
+# list_rho_file = f"list_of_list_rho_L{L}_standard_deviation{standard_deviation}_chi_max{chi_max}.npy"
+# np.save(list_rho_file, np.array(list_of_list_rho, dtype=object), allow_pickle=True)
+
+list_errors_file = f"new_list_of_list_errors_L{L}_standard_deviation{standard_deviation}_chi_max{chi_max}number_tests{number_tests}.npy"
+np.save(list_errors_file, np.array(list_of_list_errors, dtype=object), allow_pickle=True)
+
+list_last_errors_file = f"new_list_last_errors_L{L}_standard_deviation{standard_deviation}_chi_max{chi_max}_number_tests{number_tests}.npy"
+np.save(list_last_errors_file, np.array(list_last_errors, dtype=object), allow_pickle=True)
+
 exit()
 # print(f"list_M: {list_M}")
 # print(f"list_rho:{list_rho}")
