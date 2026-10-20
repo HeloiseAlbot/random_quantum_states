@@ -35,6 +35,8 @@ def von_neumann_entropy(state: np.ndarray) -> float:
 def partial_trace(rho, dims, keep):
     """
     Compute the partial trace of the density matrix 'rho'.
+    Assume standard lexicographical (Kronecker product) order. 
+    It reshapes the input flat matrix direct to a tensor with shape (d0, d1, ..., d0, d1, ...) where the first half of the dimensions represent row indices and the second half represent column indices. 
     
     Parameters:
     rho (np.ndarray): The density matrix.
@@ -64,6 +66,7 @@ def partial_trace(rho, dims, keep):
 def partial_trace_2(d, L, rho, sigma_tuples, keep):
     """
     Compute the partial trace of the density matrix 'rho'.
+    Do not assume standard Kronecker ordering for the input matrix rho. Instead, it uses sigma_tuples to manually map matrix entries (ridx, cidx) into the tensor shape (d, d, ..., d, d). 
     
     Parameters:
     rho (np.ndarray): The density matrix.
@@ -107,47 +110,6 @@ def partial_trace_2(d, L, rho, sigma_tuples, keep):
     
     return reduced_rho
 
-
-def compute_bond_dimension_truncating(state, dimensions, epsilon=1e-10):
-    # Ensure the state is reshaped as a tensor
-    state = state.reshape(dimensions)
-    
-    bond_dims = []
-    
-    current_state = state
-    for i in range(len(dimensions) - 1):
-        d1 = np.prod(dimensions[:i+1])
-        d2 = np.prod(dimensions[i+1:])
-        # Reshape and pad if necessary
-        num_elements = current_state.size
-        target_size = d1 * d2
-        
-        if num_elements < target_size:
-            # Create a new array with zeros and copy the original data
-            padded_state = np.zeros(target_size, dtype=complex)
-            padded_state[:num_elements] = current_state.flatten()
-            current_state = padded_state.reshape((d1, d2))
-        else:
-            current_state = current_state.reshape((d1, d2))
-        
-        # Perform SVD
-        # According to np documention, S is an array representing "vector(s) with the singular 
-        # values, within each vector sorted in descending order. 
-        U, S, V = np.linalg.svd(current_state, full_matrices=False)
-        
-        # Truncate singular values based on epsilon
-        S_truncated = S[S > epsilon]
-        
-        # Bond dimension is the number of singular values greater than epsilon
-        bond_dims.append(len(S_truncated))
-        
-        # Update current_state for the next partition
-        current_state = np.dot(np.diag(S_truncated), V[:S_truncated.size])
-    
-    # The bond dimension is the maximum bond dimension found
-    bond_dimension = max(bond_dims)
-    return bond_dimension
-
 def compute_bond_dimension(state, dimensions, epsilon=1e-10):
     # Ensure the state is reshaped as a tensor
     state = state.reshape(dimensions)
@@ -158,7 +120,7 @@ def compute_bond_dimension(state, dimensions, epsilon=1e-10):
     for i in range(len(dimensions) - 1):
         d1 = np.prod(dimensions[:i+1])
         d2 = np.prod(dimensions[i+1:])
-        
+        # Reshape and pad if necessary
         current_state = current_state.reshape((d1, d2))
         
         # Perform SVD
@@ -175,32 +137,31 @@ def compute_bond_dimension(state, dimensions, epsilon=1e-10):
     # The bond dimension is the maximum bond dimension found
     bond_dimension = max(bond_dims)
     return bond_dimension
-# Test and study of the properties of random quantum states
 
-def average_bond_dimension_for_epsilon(num_states, qubit_dim, num_qubits, epsilon_values, truncating=False):
-    average_bond_dims = []
-    dimensions = [qubit_dim] * num_qubits
+# def average_bond_dimension_for_epsilon(num_states, qubit_dim, num_qubits, epsilon_values, truncating=False):
+#     average_bond_dims = []
+#     dimensions = [qubit_dim] * num_qubits
     
-    for epsilon in epsilon_values:
-        bond_dims = []
-        for _ in range(num_states):
-            # Generate a random quantum state
-            state = random_quantum_state(qubit_dim**num_qubits)
-            state = state.reshape(dimensions)
-            state = state / np.linalg.norm(state)  # Normalize the state
+#     for epsilon in epsilon_values:
+#         bond_dims = []
+#         for _ in range(num_states):
+#             # Generate a random quantum state
+#             state = random_quantum_state(qubit_dim**num_qubits)
+#             state = state.reshape(dimensions)
+#             state = state / np.linalg.norm(state)  # Normalize the state
             
-            # Compute the bond dimension for the current state
-            if truncating:
-                bond_dim = compute_bond_dimension_truncating(state, dimensions, epsilon)
-            else:    
-                bond_dim = compute_bond_dimension(state, dimensions, epsilon)
-            bond_dims.append(bond_dim)
+#             # Compute the bond dimension for the current state
+#             if truncating:
+#                 bond_dim = compute_bond_dimension(state, dimensions, epsilon)
+#             else:    
+#                 bond_dim = compute_bond_dimension(state, dimensions, epsilon)
+#             bond_dims.append(bond_dim)
         
-        # Compute the average bond dimension for the current epsilon
-        average_bond_dim = np.mean(bond_dims)
-        average_bond_dims.append(average_bond_dim)
+#         # Compute the average bond dimension for the current epsilon
+#         average_bond_dim = np.mean(bond_dims)
+#         average_bond_dims.append(average_bond_dim)
     
-    return average_bond_dims
+#     return average_bond_dims
 
 def is_density_matrix(rho, tol=1e-10):
     """

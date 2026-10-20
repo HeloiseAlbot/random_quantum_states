@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from scipy.optimize import minimize
 from scipy.special import iv  # modified Bessel function I_0
 
-from distribution_functions.random_mps import (
+from distribution_functions.random_mps_v2 import (
     gaussian_point_on_the_n_sphere_in_a_disk,
     generate_angle_maximally_entangled_eigenvalues,
 )

@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 # import seaborn as sns
 from scipy.stats import linregress
 
-from distribution_functions.random_mps import gaussian_point_on_the_n_sphere_in_a_disk, generate_angle_maximally_entangled_eigenvalues, random_point_on_the_n_sphere_in_a_disk
+from distribution_functions.random_mps_v2 import gaussian_point_on_the_n_sphere_in_a_disk, generate_angle_maximally_entangled_eigenvalues, random_point_on_the_n_sphere_in_a_disk
 
 n_start = 1000
 n_stop = 5000

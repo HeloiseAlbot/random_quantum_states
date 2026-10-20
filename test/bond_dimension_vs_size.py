@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-from distribution_functions.random_mps import (
+from distribution_functions.random_mps_v2 import (
     gaussian_point_on_the_n_sphere_in_a_disk,
     generate_angle_maximally_entangled_eigenvalues,
 )

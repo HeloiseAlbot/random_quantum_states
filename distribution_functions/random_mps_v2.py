@@ -1,9 +1,9 @@
 import numpy as np
 import math
 
-from scipy.optimize import root
-from scipy.optimize import minimize
-from scipy.linalg import block_diag, eigh, svd, cholesky, solve_triangular
+# from scipy.optimize import root
+# from scipy.optimize import minimize
+from scipy.linalg import eigh, svd, block_diag, cholesky, solve_triangular
 from scipy.stats import unitary_group, norm
 from itertools import product
 from enum import Enum
@@ -33,10 +33,6 @@ def random_unitary_matrix(n):
     d = np.diag(R)
     Q = Q * (d / np.abs(d)) 
     return Q 
- 
-# def pseudo_inverse_diag(_S, threshold):
-#     _S_inv = np.array([1/s if s > threshold else 0.0 for s in _S])
-#     return _S_inv
 
 def draw_random_mps(length: int, chi_max: int, d: int = 2, standard_deviation: float = None, _verbosity: int = VLevel.INFO):
     """
@@ -45,8 +41,12 @@ def draw_random_mps(length: int, chi_max: int, d: int = 2, standard_deviation: f
     length (int): the number of sites in the chain.
     chi_max (int): the bond dimension of the MPS.
     d (int): the dimension of the local Hilbert space.
+    standard_deviation (float): if it is None, the eigenvalues are uniformly distributed on the unit n-sphere.
+    Otherwise, the eigenvalues are distributed around the maximally entangled point following a Gaussian distribution of stardard deviation = standard_deviation. 
 
     Return:
+    list_M (list[np.array]): list of the tensor of the MPS.
+    list_rho (list[np.array]): list of the array of the eigenvalues between the different bipartition obtained with one cut on the lattice chain.
     """
 
     def get_max_bond_dim(l: int):
@@ -111,7 +111,6 @@ def draw_random_mps(length: int, chi_max: int, d: int = 2, standard_deviation: f
         vprint("Sampling MPS tensor M@{}, dim(M_{}) = {} x {}".format(l, l, left_chi_max, right_chi_max), _verbosity, VLevel.INFO)
 
         if l < length-1:
-
             '''
             We sample Q with dim (d*left_chi_max, d*left_chi_max)
             '''
@@ -271,6 +270,10 @@ def iterative_solve_mps(list_M: list, list_rho: list, maxit: int = 100, eps: flo
     return list_M, list_errors
 
 def random_point_on_the_n_sphere(n, r=1): 
+    """
+    Return the coordinates of random points uniformly distributed on the n-sphere.
+    By default, r=1 so it is the unit n-sphere.
+    """
     # Step 1: Generate the random angles
     angles = np.zeros(n-1)
     angles[:-1] = np.random.uniform(0, np.pi, n - 2)   # φ1, φ2, ..., φ_{n-2} in [0, π]
@@ -294,8 +297,8 @@ def Dirichlet_distribution(n, alpha=1):
 
 def squared_moduli_column_Haar_random_unitary(n: int)-> np.array:
     """
-    Return the squared modilu of complex elements os a column (the first column) of an
-    auxiliary ranodm unitary matrix drawn with respect to the Haar measure on U(n).
+    Return the squared modilu of complex elements of a column (the first column) of an
+    auxiliary random unitary matrix drawn with respect to the Haar measure on U(n).
     
     Input:
     n (int): the dimension of the vector
@@ -354,49 +357,6 @@ def vector_state_from_mps_v2(list_M: list, L: int, d: int = 2) -> np.array:
         state_flat[sidx] = psi_config[0, 0]
 
     return state_flat, sigma_tuples
-
-# def vector_state_from_mps_v2(list_M: list, list_rho: list, L:int, d=2)->np.array:
-#     """
-#     Input:
-#     list_M (list): list of the matrices M_sigma_l ordered increasingly. The matrices M_sigma_l[l] for l
-#     in [1, L/2-1] contained the matrices A_l^{\sigma_l} are stored. The matrices M_sigma_l[l] for l
-#     in [L/2, L] contained the matrices B_l^{\sigma_l} are stored.
-#     list_rho (list): list of the eigenvalues ordered increasingly.
-#     L (int): the number of lattice sites. 
-#     d (int): The size of the sigma_l index, the dimension of the qudit.
-    
-#     Output:
-#     vector_state (np.array): vector_state[sigma_1, sigma_2, ..., sigma_L] holds the desired matrix product
-#     """
-#     # Initialize vector_state with shape (d, d, ..., d) repeated L times
-#     vector_state_shape = (d,) * L
-#     vector_state = np.zeros(vector_state_shape, dtype=object)
-#     vector_labels = np.zeros(vector_state_shape, dtype=object)
-#     sigma_tuples = list(product(range(d), repeat=L))
-#     rho_middle = np.diag(list_rho[int(L/2+1)])
-#     # Iterate over all combinations of sigma_1, sigma_2, ..., sigma_L
-#     for sidx, sigma_tuple in enumerate(sigma_tuples):
-#         # Initialize product as identity matrix of size (n x n)
-#         product_matrix = np.eye(1, dtype="complex")
-
-#         # Multiply A_1^{sigma_1} @ A_2^{sigma_2} @ ... @ A_L^{sigma_L}
-#         for l, sigma_l in enumerate(sigma_tuple):
-#             A = list_M[l]
-#             product_matrix = product_matrix @ A[sigma_l, :, :]
-#             if l==int(L/2):
-#                 # Eq. (53) of The DMRG in the age of MPS by US. 
-#                 product_matrix = product_matrix @ np.sqrt(rho_middle)
-        
-
-#         # Assign the result to vector_state at the index sigma_1, ..., sigma_L
-#         vector_state[sigma_tuple] = product_matrix
-#         vector_labels[sigma_tuple] = sidx
-
-#     # Now vector_state[sigma_1, sigma_2, ..., sigma_L] holds the desired matrix product
-#     vector_state = vector_state.reshape((d**L))
-#     state_flat = np.array([x[0] for x in vector_state])
-#     labels_flat = vector_labels.reshape((d**L))
-#     return state_flat.reshape(d**L), sigma_tuples, labels_flat
 
 def is_unitary(A, tol=1e-10):
     A = np.asarray(A)

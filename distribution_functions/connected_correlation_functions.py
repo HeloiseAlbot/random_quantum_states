@@ -1,5 +1,5 @@
 import numpy as np
-from random_mps import produce_random_mps, produce_random_mps_eigenvalues_in_a_disk, produce_random_mps_eigenvalues_gaussian_in_a_disk
+from distribution_functions.random_mps_v2 import produce_random_mps, produce_random_mps_eigenvalues_in_a_disk, produce_random_mps_eigenvalues_gaussian_in_a_disk
 
 # Pauli-Z matrix
 Z = np.array([[1, 0], [0, -1]])
