@@ -6,9 +6,19 @@
 *.json
 *.txt
 *.pdf
+correlation_matrices.sh
+entanglement_entropy_vs_size.sh
+kl_divergence_calculation.sh
+kl_divergence_calculation_disk_t.sh
+plot_histogram_entropy_vs_bond_dimension.py
+plot_histogram_entropy_vs_bond_dimension_from_file.py
+plot_random_parameters_changing_generator.ipynb
+random_state_parameters_changing.sh
+rupture_point_calculations.sh
 # Ignore Python virtual environments
 .venv/
-test/
+
 slurm/
 
 data/
+test/
