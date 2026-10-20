@@ -20,12 +20,20 @@ A standard approach to generate random pure quantum states relies on sampling fr
 
 ## Repository Structure
 
-*(Adjust or expand this section based on your specific directory tree)*
+## Repository Structure
+
+The core functionality of the project is organized within the `distribution_functions` package:
 
 ```text
-├── src/                  # Core source code (sampling routines, MPS construction)
-├── scripts/              # Execution scripts for numerical experiments
-├── notebooks/            # Jupyter notebooks for data analysis and visualization
-├── tests/                # Unit tests
-├── requirements.txt      # Python dependencies
+random_quantum_states/
+├── distribution_functions/
+│   ├── __init__.py
+│   ├── connected_correlation_functions.py
+│   ├── correlation_functions_test.ipynb
+│   ├── kl_divergence_tools.py
+│   ├── property_calculation_functions.py
+│   ├── random_mps_old.py
+│   ├── random_mps_v2.py
+│   └── standard_random_states_and_matrices.py
+├── .gitignore
 └── README.md
