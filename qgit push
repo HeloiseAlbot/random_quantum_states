@@ -1,0 +1,546 @@
+[33mcommit b8a979f08b11e5806ffdb0045a5a8d99e88c7a0c[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m)[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Tue Oct 20 17:30:01 2026 +0200
+
+    A bit of cleaning
+
+[33mcommit a782c4786e21b6bd3362e946f98ee24beb21b16f[m[33m ([m[1;31mgitlab/master[m[33m)[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Mon Aug 3 17:14:40 2026 +0200
+
+    Saving all in order to continue cleaning before to put it on Github. I started to clean a bit already
+
+[33mcommit 46e4d7b6ad1a8a2bcc3b870de768e9f124b64206[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Tue Dec 9 14:52:53 2025 +0100
+
+    Suppresion of the majorization criteria
+
+[33mcommit 3dfedf5dac073ed8990b6dc3c391ca0a0c96c1f2[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Fri Dec 5 14:19:50 2025 +0100
+
+    Add the possibility to sample the points on the unit sphere according to a Gaussian distribution with average=maximally entanglement point, standard_deviation=standard_deviation
+
+[33mcommit a6a99da88d48ea51849e14d0c18351b8666a012b[m
+Author: Sebastian Paeckel <sebastian.paeckel@physik.uni-muenchen.de>
+Date:   Thu Dec 4 20:15:55 2025 +0100
+
+    small fixes
+
+[33mcommit c8fc3787d941f87acb91a15fcca29148a5392cc9[m
+Author: Sebastian Paeckel <sebastian.paeckel@physik.uni-muenchen.de>
+Date:   Thu Dec 4 20:08:12 2025 +0100
+
+    added negativity check for stability
+
+[33mcommit de4d58385703b307fe58ef5cc7a5a4f70c2e474c[m
+Author: Sebastian Paeckel <sebastian.paeckel@physik.uni-muenchen.de>
+Date:   Thu Dec 4 19:57:44 2025 +0100
+
+    testcase updated
+
+[33mcommit 0f630eeac68baa40d66e12ecf47f8928db6c8f98[m
+Author: Sebastian Paeckel <sebastian.paeckel@physik.uni-muenchen.de>
+Date:   Thu Dec 4 19:52:14 2025 +0100
+
+    testcase updated
+
+[33mcommit 04cb86a26e8db78a3cedab6470ff63a979f5e939[m
+Author: Sebastian Paeckel <sebastian.paeckel@physik.uni-muenchen.de>
+Date:   Thu Dec 4 19:50:54 2025 +0100
+
+    iterative svd-update
+
+[33mcommit ca6b9dd8590170ee81c1797e78e4cc5453a0e8af[m
+Author: Sebastian Paeckel <sebastian.paeckel@physik.uni-muenchen.de>
+Date:   Thu Dec 4 11:23:30 2025 +0100
+
+    solved some problems
+
+[33mcommit 613080f3428162af9c240e414d915802c6b02d11[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Thu Nov 27 17:59:45 2025 +0100
+
+    Modification of vector_state_from_mps_v2
+
+[33mcommit dca2f1ab75b8763c861c062055c4cf03e63105e2[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Thu Nov 27 17:37:46 2025 +0100
+
+    Add vector_state_from_mps_v2, the reduced density matrices are not the ones we expect
+
+[33mcommit fc7c116f8a6e74278c139efee1977e336ca4c8b3[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Thu Nov 27 16:51:09 2025 +0100
+
+    Add the new algorithm to obtain the MPS according to the random eigenvalues, I haven't check yet if the vector state obtained has the wanted properties.
+
+[33mcommit f3420491aeded6becc8a18f007bea62d1ed9018d[m
+Merge: 51a8d78 bb4d241
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Mon Nov 24 14:48:21 2025 +0100
+
+    Fix the conflicts between the file
+
+[33mcommit bb4d241f1f31a63f4af898e5e3c97e40eb4f0da6[m[33m ([m[1;32mrevert-to-old[m[33m)[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Mon Nov 24 14:43:31 2025 +0100
+
+    random_mps_v2
+
+[33mcommit 51a8d78bdb219bb5dad7906538830cce2022d4ed[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Mon Nov 24 14:33:15 2025 +0100
+
+    I commited all because I want to go back to a previous branch
+
+[33mcommit b1bae7cd57d462b0214c0a4f8af250c43eacbbd6[m
+Merge: f9d98a9 deb4b8f
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Mon Nov 24 13:53:16 2025 +0100
+
+    Merge branch 'master' of gitlab.physik.uni-muenchen.de:H.Albot/state_distribution
+
+[33mcommit deb4b8f94914dda78955ed079011c73558b222f0[m[33m ([m[1;32mlist[m[33m)[m
+Author: Sebastian Paeckel <sebastian.paeckel@physik.uni-muenchen.de>
+Date:   Tue Nov 18 19:01:07 2025 +0100
+
+    new trace function
+
+[33mcommit f9d98a99e0e1d170837e6c6cfa2826944dff4658[m
+Merge: 41db553 b44d84a
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Mon Nov 10 16:37:07 2025 +0100
+
+    I merge
+
+[33mcommit 41db553dd18de43bd9ffb73c59adde91ee1538b4[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Mon Nov 10 16:34:25 2025 +0100
+
+    COmmit to be able to pull
+
+[33mcommit b44d84a7e5683943eaa8955cee97f1239e557418[m
+Author: Sebastian Paeckel <sebastian.paeckel@physik.uni-muenchen.de>
+Date:   Mon Nov 10 16:22:19 2025 +0100
+
+    fine-tuned numerical stability threshold
+
+[33mcommit be8a486a9f9559fb646428785e6387118889be79[m
+Author: Sebastian Paeckel <sebastian.paeckel@physik.uni-muenchen.de>
+Date:   Mon Nov 10 16:21:22 2025 +0100
+
+    fine-tuned numerical stability threshold
+
+[33mcommit 6801cc87a95d32e25d6ab894e94c4eb240e4bda4[m
+Author: Sebastian Paeckel <sebastian.paeckel@physik.uni-muenchen.de>
+Date:   Mon Nov 10 16:15:49 2025 +0100
+
+    placed stability warning at correct part of the inversion
+
+[33mcommit 0fa3f74338eb60e8d6ace4c2cc2d9a8c0d600c2f[m
+Author: Sebastian Paeckel <sebastian.paeckel@physik.uni-muenchen.de>
+Date:   Mon Nov 10 15:58:19 2025 +0100
+
+    small adoptions
+
+[33mcommit ecb331d17ef8ef50b74f9d119b4876148a7ad363[m
+Author: Sebastian Paeckel <sebastian.paeckel@physik.uni-muenchen.de>
+Date:   Mon Nov 10 15:56:42 2025 +0100
+
+    added warning if numerical threshold reached
+
+[33mcommit 7df5bffb7152aaf0b853e4d7e0d05fe86a915fb8[m
+Author: Sebastian Paeckel <sebastian.paeckel@physik.uni-muenchen.de>
+Date:   Mon Nov 10 15:45:05 2025 +0100
+
+    trying to stabilize inversion
+
+[33mcommit 3cf3e4a7cf7786da4296afaee03268fb75601a9e[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Fri Nov 7 14:40:43 2025 +0100
+
+    Add test to check if we have the wanted reduced density matrices, modified.
+
+[33mcommit 45fc66ca17682cb64a76864084b961be749fa872[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Fri Nov 7 14:39:29 2025 +0100
+
+    Add test to check if we have the wanted reduced density matrices
+
+[33mcommit 2aa2b5243ada46daaeed8039a0043982f075da8b[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Thu Oct 30 15:13:10 2025 +0100
+
+    Add test to check relation Eq. 17, modified.
+
+[33mcommit e5f7869190094b98d26fa409a30f1d0cdc801c6b[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Thu Oct 30 15:12:11 2025 +0100
+
+    Add test to check relation Eq. 17
+
+[33mcommit 75d0e28579eb513ceac369fe610f0f70742f33d5[m
+Merge: 3eb5ba1 62d6cb6
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Thu Oct 30 13:54:06 2025 +0100
+
+    Modified after merge
+
+[33mcommit 62d6cb6d9aab80e4b0cab2c18411a9cb22ababde[m
+Author: Sebastian Paeckel <sebastian.paeckel@physik.uni-muenchen.de>
+Date:   Thu Oct 30 13:05:33 2025 +0100
+
+    reset test case for state generation to random_mps.py
+
+[33mcommit ca85eb84ea8fe38a785dd47ff4caf657daf02217[m
+Author: Sebastian Paeckel <sebastian.paeckel@physik.uni-muenchen.de>
+Date:   Thu Oct 30 13:04:24 2025 +0100
+
+    removed truncation ni inversion
+
+[33mcommit dc304e22baaf08718e859c329d0fb111f7de2b9f[m
+Author: Sebastian Paeckel <sebastian.paeckel@physik.uni-muenchen.de>
+Date:   Thu Oct 30 11:53:40 2025 +0100
+
+    fixed truncation bug
+
+[33mcommit d893de26d951dff8e2e93f713794b314f773b5a4[m
+Author: Sebastian Paeckel <sebastian.paeckel@physik.uni-muenchen.de>
+Date:   Thu Oct 30 11:46:09 2025 +0100
+
+    clue for norm-issue found
+
+[33mcommit 89d0cbc065716e61cdab5e149e224a6eeaf33dd8[m
+Author: Sebastian Paeckel <sebastian.paeckel@physik.uni-muenchen.de>
+Date:   Thu Oct 30 11:39:32 2025 +0100
+
+    small issue with normalization...
+
+[33mcommit 160fee0f0ba1fa0dc3831ff7eecedd793a107757[m
+Author: Sebastian Paeckel <sebastian.paeckel@physik.uni-muenchen.de>
+Date:   Thu Oct 30 11:32:15 2025 +0100
+
+    fixed meaningless test
+
+[33mcommit e9ebd6da039bc5b7f6e5c66ffde40784148ba29d[m
+Author: Sebastian Paeckel <sebastian.paeckel@physik.uni-muenchen.de>
+Date:   Thu Oct 30 11:21:07 2025 +0100
+
+    adopted testcase
+
+[33mcommit 2d36bd8c5246ab7fd841cb5979a7255cffa3b1f3[m
+Merge: ea117fc a0f2631
+Author: Sebastian Paeckel <sebastian.paeckel@physik.uni-muenchen.de>
+Date:   Thu Oct 30 11:12:21 2025 +0100
+
+    Merge branch 'master' of gitlab.physik.uni-muenchen.de:H.Albot/state_distribution
+
+[33mcommit ea117fc64801e8eaaf03c105fe6a3a4ad889ab9f[m
+Author: Sebastian Paeckel <sebastian.paeckel@physik.uni-muenchen.de>
+Date:   Thu Oct 30 11:12:19 2025 +0100
+
+    fixed trheshold for recusrive svd
+
+[33mcommit 3eb5ba1e3bbfc7d901f9e0c4d8bf845807c9f96d[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Thu Oct 30 10:38:59 2025 +0100
+
+    Small modifications. In order to pull, I commit before.
+
+[33mcommit 5b786451808c7160377d912ecc2ae87151f794e0[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Thu Oct 23 18:12:13 2025 +0200
+
+    Suppression of my former produce_a_random_mps function
+
+[33mcommit a0f2631d3bc8ccfeeb63a464fdc916cc8eca112b[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Mon Sep 1 18:51:54 2025 +0200
+
+    Add a quick test for left canonical property
+
+[33mcommit 0b7bd15ea962cce46050f2528b4b07a4d267fd4a[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Thu Aug 14 16:09:35 2025 +0200
+
+    Add the functions to produce a random mps with the eigenavlues in a disk (uniformly) and the eigenvalues as a Gaussian around the maximally entangled states
+
+[33mcommit 48d166cc2ef64fc1e7c1202f87045318824e4452[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Thu Aug 14 15:27:37 2025 +0200
+
+    Suppression of distribution_functions/correlation_functions.py because there is connected_correlation_functions.py
+
+[33mcommit fe3c393bb6b7f01c3a7df2d8724c643d6e4de0e0[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Thu Aug 14 15:26:27 2025 +0200
+
+    Adaptation to Sebastian code of distribution_functions/correlation_functions.py
+
+[33mcommit 7d85874c4112bbbee71a9491bf9c18745a67adcb[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Thu Aug 14 12:37:09 2025 +0200
+
+    Suppression of the truncation for the tails of the Gaussian which are outside the positive orthant.
+
+[33mcommit 738823b7a7826f7df48afecf814f18a9e26a06b0[m
+Merge: 2f14ca7 d003244
+Author: Sebastian Paeckel <sebastian.paeckel@physik.uni-muenchen.de>
+Date:   Wed Aug 13 16:57:41 2025 +0200
+
+    Merge branch 'master' of gitlab.physik.uni-muenchen.de:H.Albot/state_distribution
+
+[33mcommit 2f14ca710e3c452d0efd7b3016749c3d0e83a300[m
+Author: Sebastian Paeckel <sebastian.paeckel@physik.uni-muenchen.de>
+Date:   Wed Aug 13 16:56:45 2025 +0200
+
+    stabilized inversion
+
+[33mcommit d0032441729977ba29dbff85bff19a6f0ef2c2cf[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Wed Aug 13 16:49:15 2025 +0200
+
+    Add more test eigenvalues_distributions_uniform_in_annulus.py entanglement_entropy_VS_size_3D.py
+
+[33mcommit 4fd3cb2f5a945ee5d428701ee9f9ee597d72926b[m
+Merge: aa6037a aa4bb50
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Wed Aug 13 16:45:28 2025 +0200
+
+    Sebastian modifications
+
+[33mcommit aa6037a4c91324d07920a0b96df16f8022af0afb[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Wed Aug 13 16:39:53 2025 +0200
+
+    I have no idea what are those files but I have to commit to do git pull
+
+[33mcommit 8263328859db678f412e1de1ad2871dcc814b9dd[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Wed Aug 13 16:34:29 2025 +0200
+
+    Small modifications
+
+[33mcommit aa4bb506261bb2dd6411b43139bce78016d4fd48[m
+Author: Sebastian Paeckel <sebastian.paeckel@physik.uni-muenchen.de>
+Date:   Wed Aug 13 15:43:18 2025 +0200
+
+    fixed normalization bug
+
+[33mcommit 7d5ebeb337112f54198927940f245f08feff2962[m
+Author: Sebastian Paeckel <sebastian.paeckel@physik.uni-muenchen.de>
+Date:   Tue Aug 12 18:37:55 2025 +0200
+
+    some code sugaring
+
+[33mcommit 3067e6bd86702dfb108f51c4815f7a03547932d1[m
+Author: Sebastian Paeckel <sebastian.paeckel@physik.uni-muenchen.de>
+Date:   Tue Aug 12 18:35:19 2025 +0200
+
+    also return rhos
+
+[33mcommit e468139acf99db7f764bf03834d1cb78dead8def[m
+Author: Sebastian Paeckel <sebastian.paeckel@physik.uni-muenchen.de>
+Date:   Tue Aug 12 18:25:30 2025 +0200
+
+    random mps generation
+
+[33mcommit f98d3e3a4de173349273763f89642fb7013196f2[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Thu Aug 7 17:19:41 2025 +0200
+
+    COrrection of thetruncation of the tails of the Gaussian
+
+[33mcommit 7a886f6d39028c5e5e9050c2e6fb973c7a27afc8[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Wed Aug 6 17:34:11 2025 +0200
+
+    Truncation of the tails of the Gaussian such as it does not goes outside of the positive orthant. Modifications done only in the file random_mps.py
+
+[33mcommit dfa6a8e39fb9c393dda68a5df78e71967ee5adb6[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Wed Aug 6 15:41:02 2025 +0200
+
+    Small modifications not important
+
+[33mcommit 064e02bdf05b7b498238e3cc433a2359df915a98[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Thu Jul 24 17:42:43 2025 +0200
+
+    Small modifications before modifying entanglement_entropy_VS_size.py
+
+[33mcommit b36ee78aeaa0a8089db07a246dc5af5339d167b2[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Tue Jul 15 14:03:19 2025 +0200
+
+    Correction correlation_functions.py
+
+[33mcommit 80b2a6cb9bf208edb6c5d861c11e0687cf57c8dc[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Tue Jul 15 13:59:00 2025 +0200
+
+    Correlation function uses now the efficient method: contraction of tensors
+
+[33mcommit 7216dac310530bdfcc2cbe4b62564ab46f646c10[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Thu Jul 10 16:38:47 2025 +0200
+
+    correlation_functions_test cleaner 2
+
+[33mcommit e04077a7929a279bde5da7984422131858c81a9e[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Thu Jul 10 16:35:43 2025 +0200
+
+    correlation_functions_test cleaner.
+
+[33mcommit 7a3a331b1670ab9cca23613cb359289bf95fac35[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Thu Jul 10 15:07:05 2025 +0200
+
+    test.ipynb Add the evolution of the rupture parameters models
+
+[33mcommit 4be8eec0b0e05eaed0b7c919d305e0df2191472d[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Tue Jul 8 17:46:50 2025 +0200
+
+    correlation_functions.py and rupture_point files
+
+[33mcommit 4e0c49444914e50f6eedbe4dcdfdcf736701a588[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Fri May 9 17:05:23 2025 +0200
+
+    Test criticality of the states
+
+[33mcommit d65cf66120f6766e21bf2152296de503a668de03[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Wed Apr 30 17:31:57 2025 +0200
+
+    File to generate the plot of the linear coeff as a function of the standard derivation
+
+[33mcommit afd8e80ac94c811b48a3daae35ee3d9da8901ede[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Tue Apr 22 17:00:25 2025 +0200
+
+    create test/eigenvalues_distributions_in_disk
+
+[33mcommit cd2f19f57bd6399d987f48bb153d1a2760bcc608[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Fri Apr 11 14:09:25 2025 +0200
+
+    Add the square to the Frobenius norm of the constraint and the eigenvalues are not ordered anymore in the random mps procedure.
+
+[33mcommit 153a7a2d10d15b54090e50ec62f32f83e98bb5cd[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Tue Apr 8 15:39:47 2025 +0200
+
+    Lots fo test files added
+
+[33mcommit 068bef8038ec5190b618ef44e51273580605eee7[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Fri Feb 21 18:50:17 2025 +0100
+
+    Commute the Shannon entropy of our distribution for the joint probability of 2 variables (so in dimension n=3)
+
+[33mcommit 3ae433f35db685979670f67a2c78d2879acbc8ec[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Thu Feb 20 18:04:21 2025 +0100
+
+    Plot of the joint density probability functions and of the Shannon entropy
+
+[33mcommit e6c58a390bf1d579a14c5217e2e61c726f833700[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Tue Dec 10 15:01:46 2024 +0100
+
+    Code convention kl_divergence_tools.py, correction
+
+[33mcommit f6765c42fe8d81a37ee3fe14346666c15fb75342[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Tue Dec 10 15:00:34 2024 +0100
+
+    Code convention kl_divergence_tools.py
+
+[33mcommit 5ba848ffb58ea693210808eb71d3c4a458b2a4f4[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Tue Dec 10 14:49:12 2024 +0100
+
+    Automatisation production of samples of random states, produce_samples_Haar_measure created. Cross entropy function created.
+
+[33mcommit cb2b29b89cdcca19ce8a138e2c9812fcf828dbd2[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Mon Dec 9 15:48:12 2024 +0100
+
+    Automatisation production of samples of random states, creation of the functions.
+
+[33mcommit da001befb56660331b8021d80192c314696315e5[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Wed Dec 4 16:56:18 2024 +0100
+
+    Put the limit for the disk_diameter in the function produce_a_random_mps_eigenvalues_in_a_disk_center_moving
+
+[33mcommit c42078679aae5ca8dccac24fc08d554f820b6f52[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Wed Dec 4 15:31:14 2024 +0100
+
+    Before in generate_angles_between_max_entangled_and_product_state_eigenvalues, v_0 was the maximally mixed state and v_1 was the product state. I change now v_0 is the product state and v_1 is the maximally mixed state.
+
+[33mcommit c93d64390735f9e15c3dd35e93e7d25273f5cebc[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Mon Dec 2 16:08:35 2024 +0100
+
+    Small modifications to send the bash of kl_divergence_disk_moving
+
+[33mcommit 2f11b697490cda304afc1c36fb3af38d5768d493[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Fri Nov 29 17:14:25 2024 +0100
+
+    produce_a_random_mps_eigenvalues_in_a_disk_center_moving running
+
+[33mcommit 4917c68f3d9969c51f9b6cd483849011620fb522[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Fri Nov 29 15:48:22 2024 +0100
+
+    generate_angles_between_max_entangled_and_product_state_eigenvalues modified and explained
+
+[33mcommit f2bf9d3e3052af7260a945d4b84ae0d71a68a11b[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Thu Nov 28 14:09:15 2024 +0100
+
+    generate_angles_between_max_entangled_and_product_state_eigenvalues added
+
+[33mcommit 85b1bd803fd81489c4b216529517f83e09d3ac5c[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Tue Nov 26 13:39:24 2024 +0100
+
+    Correction random_state_vector_from_mps_eigenvalues_in_a_disk
+
+[33mcommit 90da8b3c188b4e80b3fd4bbf9853b83e6057348b[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Tue Nov 26 11:23:47 2024 +0100
+
+    Files to send the job of the kl_divergence calculations.
+
+[33mcommit ddb7cd3c3bc26cdfa12894f6e185a6dd077c8229[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Tue Nov 26 09:40:41 2024 +0100
+
+    Add .gitignore file
+
+[33mcommit 0fa5c3180802f156e097a9d2804c345e248ef9f9[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Mon Nov 25 18:16:39 2024 +0100
+
+    compute_kl_divergence function created.
+
+[33mcommit 6340e0650c112d05d492026d85fecf84f83ae9cd[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Mon Nov 25 18:01:39 2024 +0100
+
+    Organisation of the project. The function produce_a_point_in_a_disk runs.
+
+[33mcommit 82b8bae39baae64b0d5ee5a6392bb839a8135f0a[m
+Author: H.Albot <H.Albot@physik.uni-muenchen.de>
+Date:   Wed Nov 13 17:22:54 2024 +0100
+
+    Haar random states and files to plot them.

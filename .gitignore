@@ -8,7 +8,7 @@
 *.pdf
 # Ignore Python virtual environments
 .venv/
-
+test/
 slurm/
 
 data/
