@@ -1,25 +1,15 @@
 cff-version: 1.2.0
-message: "If you use this software, please cite it as below."
+message: "If you use this software, please cite it using these metadata."
 type: software
 authors:
   - family-names: "Albot"
     given-names: "Héloïse"
-    orcid: "https://orcid.org/" # Optional: Add your ORCID iD if you have one
+    orcid: "https://orcid.org/" 
   - family-names: "Paeckel"
     given-names: "Sebastian"
-    orcid: "https://orcid.org/" # Optional: Add Sebastian's ORCID iD if desired
-title: "Ensembles of Random Quantum States Tunable from Volume Law to Area Law"
+    orcid: "https://orcid.org/" 
+title: "random_quantum_states"
+abstract: "A Python package for generating ensembles of random quantum states tunable from volume law to area law using the MPS formalism."
 version: 1.0.0
 date-released: 2026-04-15
 url: "https://github.com/HeloiseAlbot/random_quantum_states"
-preferred-citation:
-  type: article
-  authors:
-    - family-names: "Albot"
-      given-names: "Héloïse"
-    - family-names: "Paeckel"
-      given-names: "Sebastian"
-  title: "Ensembles of random quantum states tunable from volume law to area law"
-  year: 2026
-  journal: "arXiv preprint arXiv:2604.15300"
-  url: "https://arxiv.org/abs/2604.15300"
